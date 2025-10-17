@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:send_snap/UI/Components/appbar.dart';
 
 class HomePage extends StatelessWidget {
@@ -21,25 +22,32 @@ class HomePage extends StatelessWidget {
 
 Future<void> _showMyDialog(BuildContext context) {
   return showDialog(
-    context: context, 
-    builder: (context){
+    context: context,
+    useRootNavigator: true,
+    builder: (context) {
       return AlertDialog(
         title: Text('Add an Expense'),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop;
+              Navigator.pop(context);
             },
-            child: Text('Add'),
+            child: Text("Cancel"),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop;
+              context.pushNamed('/imagegallery');
             },
-            child: Text('Add'),
+            child: Text('Pick From Gallery'),
+          ),
+          TextButton(
+            onPressed: () {
+              context.pushNamed('/imagecamera');
+            },
+            child: Text('Take Photo'),
           ),
         ],
       );
-  }
+    },
   );
 }
