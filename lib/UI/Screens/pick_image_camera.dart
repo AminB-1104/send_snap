@@ -20,8 +20,6 @@ class _ImagePickerCameraState extends State<ImagePickerCamera> {
   File? _image;
   bool _processing = false;
 
-  
-
   CategoryModel? _selectedCategory; // ✅ fixed type
   late Box<CategoryModel> _categoryBox;
 
@@ -80,9 +78,9 @@ class _ImagePickerCameraState extends State<ImagePickerCamera> {
       });
     } catch (e) {
       debugPrint("Error reading receipt: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
       setState(() => _processing = false);
     } finally {
       textRecognizer.close();
@@ -132,8 +130,9 @@ class _ImagePickerCameraState extends State<ImagePickerCamera> {
         var raw = match.group(0)!.replaceAll(',', '').trim();
 
         try {
-          if (RegExp(r'^\d{1,2}[\/\-\.\s]\d{1,2}[\/\-\.\s]\d{2,4}$')
-              .hasMatch(raw)) {
+          if (RegExp(
+            r'^\d{1,2}[\/\-\.\s]\d{1,2}[\/\-\.\s]\d{2,4}$',
+          ).hasMatch(raw)) {
             final parts = raw.split(RegExp(r'[\/\-\.\s]'));
             final d = int.parse(parts[0]);
             final m = int.parse(parts[1]);
@@ -143,8 +142,9 @@ class _ImagePickerCameraState extends State<ImagePickerCamera> {
             return DateTime(y, m, d);
           }
 
-          if (RegExp(r'^\d{4}[\/\-\.\s]\d{1,2}[\/\-\.\s]\d{1,2}$')
-              .hasMatch(raw)) {
+          if (RegExp(
+            r'^\d{4}[\/\-\.\s]\d{1,2}[\/\-\.\s]\d{1,2}$',
+          ).hasMatch(raw)) {
             final parts = raw.split(RegExp(r'[\/\-\.\s]'));
             return DateTime(
               int.parse(parts[0]),
@@ -215,8 +215,9 @@ class _ImagePickerCameraState extends State<ImagePickerCamera> {
       if (match != null) {
         final value = match.group(2);
         if (value != null) {
-          final parsed =
-              double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), ''));
+          final parsed = double.tryParse(
+            value.replaceAll(RegExp(r'[^0-9.]'), ''),
+          );
           if (parsed != null && parsed > 0 && parsed < 100000) {
             return parsed.toString();
           }
@@ -224,16 +225,16 @@ class _ImagePickerCameraState extends State<ImagePickerCamera> {
       }
     }
 
-    final numberPattern =
-        RegExp(r'([\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{2}))');
+    final numberPattern = RegExp(r'([\d]{1,3}(?:[.,]\d{3})*(?:[.,]\d{2}))');
     for (final line in lines.reversed) {
       if (line.contains('total')) continue;
       final match = numberPattern.firstMatch(line);
       if (match != null) {
         final value = match.group(1);
         if (value != null) {
-          final parsed =
-              double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), ''));
+          final parsed = double.tryParse(
+            value.replaceAll(RegExp(r'[^0-9.]'), ''),
+          );
           if (parsed != null && parsed > 0 && parsed < 100000) {
             return parsed.toString();
           }
@@ -248,26 +249,33 @@ class _ImagePickerCameraState extends State<ImagePickerCamera> {
   Widget build(BuildContext context) {
     final categories = _categoryBox.values.toList();
     return Scaffold(
-      appBar: const CustomAppBar(),
+      appBar: HomeAppBar(
+        profileImage: 'assets/images/avatar.png', // or null
+        notificationCount: 3,
+        onMonthChanged: (month) {
+          // filter expenses by month if needed
+          debugPrint("Selected month: $month");
+        },
+      ),
       body: _processing
           ? const Center(child: CircularProgressIndicator())
           : _image == null
-              ? const Center(child: Text("No image selected"))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Image.file(_image!),
-                      const SizedBox(height: 20),
-                      _buildTextField("Merchant", _merchantController),
-                      _buildTextField("Date", _dateController),
-                      const SizedBox(height: 10),
+          ? const Center(child: Text("No image selected"))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Image.file(_image!),
+                  const SizedBox(height: 20),
+                  _buildTextField("Merchant", _merchantController),
+                  _buildTextField("Date", _dateController),
+                  const SizedBox(height: 10),
 
-                      // ✅ Category Selector (Bottom Sheet)
-                      GestureDetector(
-                        onTap: () async {
-                          final selected =
-                              await showModalBottomSheet<CategoryModel>(
+                  // ✅ Category Selector (Bottom Sheet)
+                  GestureDetector(
+                    onTap: () async {
+                      final selected =
+                          await showModalBottomSheet<CategoryModel>(
                             context: context,
                             builder: (context) {
                               return ListView(
@@ -279,119 +287,113 @@ class _ImagePickerCameraState extends State<ImagePickerCamera> {
                                       style: const TextStyle(fontSize: 22),
                                     ),
                                     title: Text(cat.name),
-                                    onTap: () =>
-                                        Navigator.pop(context, cat),
+                                    onTap: () => Navigator.pop(context, cat),
                                   );
                                 }).toList(),
                               );
                             },
                           );
 
-                          if (selected != null) {
-                            setState(() => _selectedCategory = selected);
-                          }
-                        },
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Category',
-                            border: OutlineInputBorder(),
-                          ),
-                          child: Text(
-                            _selectedCategory != null
-                                ? '${_selectedCategory!.iconsvg} ${_selectedCategory!.name}'
-                                : 'Select category',
-                          ),
-                        ),
+                      if (selected != null) {
+                        setState(() => _selectedCategory = selected);
+                      }
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
+                        border: OutlineInputBorder(),
                       ),
-
-                      _buildTextField(
-                        "Total",
-                        _totalController,
-                        keyboard: TextInputType.number,
+                      child: Text(
+                        _selectedCategory != null
+                            ? '${_selectedCategory!.iconsvg} ${_selectedCategory!.name}'
+                            : 'Select category',
                       ),
-                      _buildTextField("Currency", _currencyController),
-                      _buildTextField("Note", _noteController),
-
-                      if (_itemControllers.isNotEmpty) ...[
-                        const SizedBox(height: 20),
-                        const Text(
-                          "Items",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        ListView.builder(
-                          itemCount: _itemControllers.length,
-                          shrinkWrap: true,
-                          physics:
-                              const NeverScrollableScrollPhysics(),
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 5),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller:
-                                          _itemControllers[index],
-                                      decoration: InputDecoration(
-                                        labelText: "Item ${index + 1}",
-                                        border:
-                                            const OutlineInputBorder(),
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _itemControllers.removeAt(index);
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _itemControllers
-                                  .add(TextEditingController());
-                            });
-                          },
-                          icon: const Icon(Icons.add),
-                          label: const Text("Add Item"),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: _saveExpense,
-                        icon: const Icon(Icons.save),
-                        label: const Text("Save Expense"),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: pickImage,
-                        icon: const Icon(Icons.photo),
-                        label: const Text("Scan another receipt"),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+
+                  _buildTextField(
+                    "Total",
+                    _totalController,
+                    keyboard: TextInputType.number,
+                  ),
+                  _buildTextField("Currency", _currencyController),
+                  _buildTextField("Note", _noteController),
+
+                  if (_itemControllers.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Items",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ListView.builder(
+                      itemCount: _itemControllers.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 5),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _itemControllers[index],
+                                  decoration: InputDecoration(
+                                    labelText: "Item ${index + 1}",
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _itemControllers.removeAt(index);
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _itemControllers.add(TextEditingController());
+                        });
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text("Add Item"),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: _saveExpense,
+                    icon: const Icon(Icons.save),
+                    label: const Text("Save Expense"),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: pickImage,
+                    icon: const Icon(Icons.photo),
+                    label: const Text("Scan another receipt"),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 
