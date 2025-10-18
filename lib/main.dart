@@ -1,17 +1,15 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:send_snap/Services/hive_service.dart';
 import 'package:send_snap/UI/Screens/home_page.dart';
 import 'package:send_snap/UI/Screens/pick_image_camera.dart';
 import 'package:send_snap/UI/Screens/pick_image_gallery.dart';
+import 'package:send_snap/UI/Screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await HiveService.init();
-
- 
 
   runApp(const MyApp());
 }
@@ -34,6 +32,13 @@ final GoRouter _router = GoRouter(
   routes: <RouteBase>[
     GoRoute(
       path: '/',
+      builder: (BuildContext context, GoRouterState state) {
+        return const SplashScreen(homePage: HomePage());
+      },
+    ),
+    GoRoute(
+      name: '/home',
+      path: '/home',
       builder: (BuildContext context, GoRouterState state) {
         return const HomePage();
       },
