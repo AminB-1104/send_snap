@@ -1,10 +1,8 @@
 import 'package:hive/hive.dart';
 part 'expense_model.g.dart';
 
-
 @HiveType(typeId: 0)
-class ExpenseModel {
-
+class ExpenseModel extends HiveObject {
   @HiveField(0)
   int id;
 
@@ -25,9 +23,12 @@ class ExpenseModel {
 
   @HiveField(6)
   String note;
-  
+
   @HiveField(7)
   String imagepath;
+
+  @HiveField(8)
+  List<String> items;
 
   ExpenseModel({
     required this.id,
@@ -38,5 +39,6 @@ class ExpenseModel {
     required this.category,
     required this.note,
     required this.imagepath,
+    required this.items
   });
 }

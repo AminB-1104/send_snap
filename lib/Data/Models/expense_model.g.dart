@@ -25,13 +25,14 @@ class ExpenseModelAdapter extends TypeAdapter<ExpenseModel> {
       category: fields[5] as String,
       note: fields[6] as String,
       imagepath: fields[7] as String,
+      items: (fields[8] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, ExpenseModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class ExpenseModelAdapter extends TypeAdapter<ExpenseModel> {
       ..writeByte(6)
       ..write(obj.note)
       ..writeByte(7)
-      ..write(obj.imagepath);
+      ..write(obj.imagepath)
+      ..writeByte(8)
+      ..write(obj.items);
   }
 
   @override

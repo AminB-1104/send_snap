@@ -1,8 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:send_snap/Data/Models/expense_model.dart';
+import 'package:send_snap/Services/hive_service.dart';
 import 'package:send_snap/UI/Screens/home_page.dart';
 import 'package:send_snap/UI/Screens/pick_image_camera.dart';
 import 'package:send_snap/UI/Screens/pick_image_gallery.dart';
@@ -10,11 +9,9 @@ import 'package:send_snap/UI/Screens/pick_image_gallery.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  var directory = await getApplicationDocumentsDirectory();
-  Hive.init(directory.path);
+  await HiveService.init();
 
-  Hive.registerAdapter(ExpenseModelAdapter());
-  await Hive.openBox('expenses');
+ 
 
   runApp(const MyApp());
 }
@@ -35,7 +32,6 @@ class MyApp extends StatelessWidget {
 
 final GoRouter _router = GoRouter(
   routes: <RouteBase>[
-    
     GoRoute(
       path: '/',
       builder: (BuildContext context, GoRouterState state) {
