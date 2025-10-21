@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:send_snap/Data/Models/expense_model.dart';
 
 class DashboardCard extends StatelessWidget {
@@ -8,116 +9,174 @@ class DashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
     final total = expenses.fold<num>(
       0,
       (previousValue, element) => previousValue + element.total,
     );
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      // margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF7F3DFF), Color(0xFF9F7BFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF7F3DFF).withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              "Total Balance",
+              "Account Balance",
               style: TextStyle(
                 fontFamily: 'Inter',
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 16,
+                color: Colors.grey[500],
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              "\$${total.toStringAsFixed(2)}",
+              "\$9400",
+              // "\$${total.toStringAsFixed(2)}",
               style: const TextStyle(
                 fontFamily: 'Inter',
-                color: Colors.white,
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                fontSize: 40,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 24),
 
             // Income vs Expense summary (just like Figma)
+            // Padding(
+            // padding: const EdgeInsets.symmetric(horizontal: 1.0),
+            // child:
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStat(
-                  icon: Icons.arrow_downward_rounded,
-                  label: 'Income',
-                  value: '+\$2,400.00', // placeholder, can be dynamic later
-                  color: Colors.greenAccent,
+                Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFF00A86B),
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18.0,
+                      vertical: 18,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/income.svg',
+                              width: 32,
+                              height: 32,
+                              colorFilter: ColorFilter.mode(
+                                Color(0xFF00A86B),
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Income',
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              '\$5000',
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                _buildStat(
-                  icon: Icons.arrow_upward_rounded,
-                  label: 'Expense',
-                  value: '-\$${total.toStringAsFixed(2)}',
-                  color: Colors.redAccent,
+
+                Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFFFD3C4A),
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18.0,
+                      vertical: 18,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/income.svg',
+                              width: 32,
+                              height: 32,
+                              colorFilter: ColorFilter.mode(
+                                Color(0xFFFD3C4A),
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Expenses',
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              '\$${total.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildStat({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Row(
-      children: [
-        CircleAvatar(
-          backgroundColor: Colors.white.withOpacity(0.2),
-          radius: 20,
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.white70,
-                fontSize: 14,
-              ),
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

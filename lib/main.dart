@@ -30,15 +30,15 @@ class MyApp extends StatelessWidget {
 
 final GoRouter _router = GoRouter(
   routes: <RouteBase>[
+    // GoRoute(
+    //   path: '/',
+    //   builder: (BuildContext context, GoRouterState state) {
+    //     return SplashScreen();
+    //   },
+    // ),
     GoRoute(
+      name: '/',
       path: '/',
-      builder: (BuildContext context, GoRouterState state) {
-        return SplashScreen();
-      },
-    ),
-    GoRoute(
-      name: '/home',
-      path: '/home',
       builder: (BuildContext context, GoRouterState state) {
         return const HomePage();
       },

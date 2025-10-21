@@ -1,9 +1,10 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:send_snap/UI/Screens/home_page.dart';
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -35,9 +36,12 @@ class _SplashScreenState extends State<SplashScreen>
       });
     });
 
-    Timer(Duration(seconds: 3), () { // Adjust duration as needed
+    Timer(Duration(seconds: 3), () {
+      // Adjust duration as needed
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => HomePage()), // Replace with your HomePage
+        MaterialPageRoute(
+          builder: (context) => HomePage(),
+        ), // Replace with your HomePage
       );
     });
   }
@@ -56,9 +60,7 @@ class _SplashScreenState extends State<SplashScreen>
         return Stack(
           children: [
             // Home page behind splash
-            Opacity(
-              opacity: 1.0 - _fadeOutAnimation.value,
-            ),
+            Opacity(opacity: 1.0 - _fadeOutAnimation.value),
 
             // Splash content in front
             Opacity(
@@ -81,7 +83,9 @@ class _SplashScreenState extends State<SplashScreen>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFCAC12).withOpacity(0.6),
+                                color: const Color(
+                                  0xFFFCAC12,
+                                ).withValues(alpha: 0.6),
                                 blurRadius: 50,
                                 spreadRadius: 20,
                               ),

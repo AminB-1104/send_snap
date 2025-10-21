@@ -249,14 +249,6 @@ class _ImagePickerGalleryState extends State<ImagePickerGallery> {
   Widget build(BuildContext context) {
     final categories = _categoryBox.values.toList();
     return Scaffold(
-      appBar: HomeAppBar(
-        profileImage: 'assets/images/avatar.png', // or null
-        notificationCount: 3,
-        onMonthChanged: (month) {
-          // filter expenses by month if needed
-          debugPrint("Selected month: $month");
-        },
-      ),
       body: _processing
           ? const Center(child: CircularProgressIndicator())
           : _image == null

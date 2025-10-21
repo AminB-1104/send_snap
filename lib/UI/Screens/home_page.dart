@@ -1,3 +1,4 @@
+// lib/UI/Pages/home_page.dart (or wherever HomePage is)
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -7,7 +8,7 @@ import 'package:send_snap/Data/Models/expense_model.dart';
 import 'package:send_snap/Services/hive_service.dart';
 import 'package:send_snap/UI/Components/appbar.dart';
 import 'package:send_snap/UI/Components/dashboard_card.dart';
-import 'package:send_snap/UI/Components/category_selector.dart';
+import 'package:send_snap/UI/Components/chip_selector.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,6 +20,81 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   CategoryModel? selectedCategory;
 
+  int selectedMonth = DateTime.now().month;
+  String selectedFilter = 'Today'; // default selected chip
+
+  @override
+  void initState() {
+    super.initState();
+    // No longer storing filteredExpenses in state — we compute it live in the builder
+  }
+
+  // Helper to compute the date range based on selectedFilter and selectedMonth
+  DateTimeRange _computeRange(DateTime now) {
+    late DateTime start;
+    late DateTime end;
+
+    switch (selectedFilter) {
+      case 'Week':
+        final weekday = now.weekday; // monday=1
+        start = DateTime(
+          now.year,
+          now.month,
+          now.day,
+        ).subtract(Duration(days: weekday - 1));
+        end = start.add(const Duration(days: 7));
+        break;
+
+      case 'Month':
+        start = DateTime(now.year, selectedMonth, 1);
+        end = (selectedMonth == 12)
+            ? DateTime(now.year + 1, 1, 1)
+            : DateTime(now.year, selectedMonth + 1, 1);
+        break;
+
+      case 'Year':
+        start = DateTime(now.year, 1, 1);
+        end = DateTime(now.year + 1, 1, 1);
+        break;
+
+      default: // Today
+        start = DateTime(now.year, now.month, now.day);
+        end = start.add(const Duration(days: 1));
+        break;
+    }
+
+    return DateTimeRange(start: start, end: end);
+  }
+
+  // filters a list of expenses by date range + category (if selected)
+  List<ExpenseModel> _applyFilters(List<ExpenseModel> allExpenses) {
+    final now = DateTime.now();
+    final range = _computeRange(now);
+
+    final results = allExpenses.where((e) {
+      final d = e.date;
+      final inRange =
+          (d.isAtSameMomentAs(range.start) || d.isAfter(range.start)) &&
+          (d.isBefore(range.end) || d.isAtSameMomentAs(range.end));
+      if (!inRange) return false;
+
+      if (selectedCategory == null) return true;
+      return e.category == selectedCategory!.name;
+    }).toList();
+
+    return results;
+  }
+
+  void _onMonthChanged(int month) {
+    setState(() => selectedMonth = month);
+    // No further action needed; the ValueListenableBuilder will rebuild and call _applyFilters
+  }
+
+  void _onFilterChanged(String filter) {
+    setState(() => selectedFilter = filter);
+    // UI rebuilds automatically
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -27,69 +103,31 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: HomeAppBar(
-        profileImage: 'assets/images/avatar.png', // or null
-        notificationCount: 3,
-        onMonthChanged: (month) {
-          // filter expenses by month if needed
-          debugPrint("Selected month: $month");
-        },
+        profileImage: 'assets/images/avatar.png',
+        selectedMonth: selectedMonth,
+        onMonthChanged: _onMonthChanged,
       ),
       body: SafeArea(
         child: ValueListenableBuilder(
           valueListenable: HiveService.expenses.listenable(),
           builder: (context, Box<ExpenseModel> box, _) {
             final allExpenses = box.values.toList().cast<ExpenseModel>();
-            final filteredExpenses = selectedCategory == null
-                ? allExpenses
-                : allExpenses
-                      .where((e) => e.category == selectedCategory!.name)
-                      .toList();
+
+            // compute filtered list live (so Hive updates are reflected immediately)
+            final visibleExpenses = _applyFilters(allExpenses);
 
             return CustomScrollView(
               slivers: [
-                // --- HEADER SECTION ---
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 24,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Good Morning 👋",
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: isDark ? Colors.white70 : Colors.grey[700],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Ameen",
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
                 // --- DASHBOARD CARD ---
                 SliverToBoxAdapter(child: DashboardCard(expenses: allExpenses)),
 
-                // --- CATEGORY SELECTOR ---
+                // --- FILTER SELECTOR (chips) ---
                 SliverToBoxAdapter(
                   child: SizedBox(
                     height: 60,
-                    child: CategorySelector(
-                      selectedCategory: selectedCategory,
-                      onCategorySelected: (category) {
-                        setState(() => selectedCategory = category);
-                      },
+                    child: FilterSelector(
+                      selectedFilter: selectedFilter,
+                      onFilterChanged: _onFilterChanged,
                     ),
                   ),
                 ),
@@ -113,7 +151,7 @@ class _HomePageState extends State<HomePage> {
                 ),
 
                 // --- TRANSACTION LIST ---
-                filteredExpenses.isEmpty
+                visibleExpenses.isEmpty
                     ? const SliverFillRemaining(
                         hasScrollBody: false,
                         child: Center(
@@ -125,7 +163,7 @@ class _HomePageState extends State<HomePage> {
                       )
                     : SliverList(
                         delegate: SliverChildBuilderDelegate((context, index) {
-                          final expense = filteredExpenses[index];
+                          final expense = visibleExpenses[index];
                           return Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -208,7 +246,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           );
-                        }, childCount: filteredExpenses.length),
+                        }, childCount: visibleExpenses.length),
                       ),
               ],
             );
@@ -216,7 +254,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
 
-      // --- FLOATING ACTION BUTTON ---
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF7F3DFF),
         onPressed: () => _showAddExpenseDialog(context),
@@ -224,71 +261,76 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-}
 
-void _showAddExpenseDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Add an Expense'),
-        content: const Text('How would you like to add an expense?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.push('/imagegallery');
-            },
-            child: const Text('From Gallery'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.push('/imagecamera');
-            },
-            child: const Text('Use Camera'),
-          ),
-        ],
-      );
-    },
-  );
-}
+  // ... keep your existing helper dialogs (unchanged) ...
+  void _showAddExpenseDialog(BuildContext context) {
+    // unchanged
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add an Expense'),
+          content: const Text('How would you like to add an expense?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.push('/imagegallery');
+              },
+              child: const Text('From Gallery'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.push('/imagecamera');
+              },
+              child: const Text('Use Camera'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-void _showExpenseDetails(BuildContext context, ExpenseModel expense) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: Text(expense.merchant),
-        content: SingleChildScrollView(
-          child: ListBody(
-            children: <Widget>[
-              if (expense.imagepath.isNotEmpty &&
-                  File(expense.imagepath).existsSync())
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Image.file(File(expense.imagepath)),
+  void _showExpenseDetails(BuildContext context, ExpenseModel expense) {
+    // unchanged
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(expense.merchant),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                if (expense.imagepath.isNotEmpty &&
+                    File(expense.imagepath).existsSync())
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Image.file(File(expense.imagepath)),
+                  ),
+                Text(
+                  'Total: ${expense.currency} ${expense.total.toStringAsFixed(2)}',
                 ),
-              Text(
-                'Total: ${expense.currency} ${expense.total.toStringAsFixed(2)}',
-              ),
-              Text('Date: ${expense.date.toLocal().toString().split(' ')[0]}'),
-              Text('Category: ${expense.category}'),
-              if (expense.note.isNotEmpty) Text('Note: ${expense.note}'),
-            ],
+                Text(
+                  'Date: ${expense.date.toLocal().toString().split(' ')[0]}',
+                ),
+                Text('Category: ${expense.category}'),
+                if (expense.note.isNotEmpty) Text('Note: ${expense.note}'),
+              ],
+            ),
           ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('Close'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      );
-    },
-  );
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

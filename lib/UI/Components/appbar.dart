@@ -1,14 +1,16 @@
+// lib/UI/Components/appbar.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String? profileImage;
-  final int notificationCount;
-  final ValueChanged<String> onMonthChanged;
+  final int selectedMonth;
+  final ValueChanged<int> onMonthChanged;
 
   const HomeAppBar({
     super.key,
     this.profileImage,
-    required this.notificationCount,
+    required this.selectedMonth,
     required this.onMonthChanged,
   });
 
@@ -20,22 +22,23 @@ class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _HomeAppBarState extends State<HomeAppBar> {
-  static const List<String> _months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+  static const List<String> months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
-
-  late String selectedMonth;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedMonth = _months[DateTime.now().month - 1];
-  }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final purple = const Color(0xFF7F3DFF);
 
     return AppBar(
@@ -44,115 +47,118 @@ class _HomeAppBarState extends State<HomeAppBar> {
       centerTitle: true,
       automaticallyImplyLeading: false,
       titleSpacing: 0,
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Profile (leading)
-          Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: GestureDetector(
-              onTap: () {
-                // TODO: navigate to profile
-              },
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.grey.shade300,
-                backgroundImage: widget.profileImage != null
-                    ? AssetImage(widget.profileImage!)
-                    : null,
-                child: widget.profileImage == null
-                    ? Icon(Icons.person, color: purple)
-                    : null,
-              ),
-            ),
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 16),
+        child: GestureDetector(
+          onTap: () {
+            // TODO: navigate to profile
+          },
+          child: CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.grey.shade300,
+            backgroundImage: widget.profileImage != null
+                ? AssetImage(widget.profileImage!)
+                : null,
+            child: widget.profileImage == null
+                ? Icon(Icons.person, color: purple)
+                : null,
           ),
-
-          // Month selector (center) — implemented as PopupMenuButton for reliability
-          PopupMenuButton<String>(
-            initialValue: selectedMonth,
-            tooltip: 'Select month',
-            offset: const Offset(0, 48),
-            color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-            onSelected: (value) {
-              setState(() => selectedMonth = value);
-              widget.onMonthChanged(value);
-            },
-            itemBuilder: (context) {
-              return _months.map((m) {
-                return PopupMenuItem<String>(
-                  value: m,
-                  child: Text(m,
-                      style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
-                      )),
-                );
-              }).toList();
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  selectedMonth,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Icon(
-                  Icons.keyboard_arrow_down,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-              ],
-            ),
-          ),
-
-          // Notifications (trailing)
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.notifications_none,
-                    size: 26,
-                    color: isDark ? Colors.white : Colors.black,
-                  ),
-                  onPressed: () {
-                    // TODO: open notifications page
-                  },
-                ),
-                if (widget.notificationCount > 0)
-                  Positioned(
-                    right: 6,
-                    top: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: purple,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Text(
-                        widget.notificationCount > 99 ? '99+' : widget.notificationCount.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
+
+      // === TITLE: Keep your original layout (SVG arrow then month text) ===
+      title: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: widget.selectedMonth, // use parent's selectedMonth
+          items: List.generate(12, (i) {
+            final m = i + 1;
+            return DropdownMenuItem(
+              value: m,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Text(
+                  months[i],
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: m == widget.selectedMonth
+                        ? const Color(0xAA7F3DFF)
+                        : Colors.black,
+                  ),
+                ),
+              ),
+            );
+          }),
+          onChanged: (value) {
+            if (value != null) {
+              // pass selection up to parent
+              widget.onMonthChanged(value);
+            }
+          },
+
+          icon: const SizedBox.shrink(),
+
+          selectedItemBuilder: (context) => List.generate(12, (i) {
+            // keep the original arrow+text layout
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/arrow-down-2.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: const ColorFilter.mode(
+                    Color(0xAA7F3DFF),
+                    BlendMode.srcIn,
+                  ),
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  months[i],
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 15,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            );
+          }),
+
+          dropdownColor: Colors.white,
+          isDense: true,
+          alignment: Alignment.center,
+        ),
+      ),
+
+      // Notifications (only SVG button, same color)
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: IconButton(
+            icon: SvgPicture.asset(
+              'assets/icons/notification.svg',
+              colorFilter: const ColorFilter.mode(
+                Color(0xAA7F3DFF),
+                BlendMode.srcIn,
+              ),
+              width: 24,
+              height: 24,
+            ),
+            onPressed: () {
+              // TODO: navigate to notifications
+            },
+          ),
+        ),
+      ],
     );
   }
 }
