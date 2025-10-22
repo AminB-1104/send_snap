@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:send_snap/Services/hive_service.dart';
+import 'package:send_snap/UI/Screens/add_expenses.dart';
+import 'package:send_snap/UI/Screens/all_transactions.dart';
+import 'package:send_snap/UI/Screens/budget.dart';
 import 'package:send_snap/UI/Screens/home_page.dart';
 import 'package:send_snap/UI/Screens/pick_image_camera.dart';
 import 'package:send_snap/UI/Screens/pick_image_gallery.dart';
-import 'package:send_snap/UI/Screens/splash_screen.dart';
+import 'package:send_snap/UI/Screens/profile.dart';
+// import 'package:send_snap/UI/Screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +33,7 @@ class MyApp extends StatelessWidget {
 }
 
 final GoRouter _router = GoRouter(
+  initialLocation: '/home',
   routes: <RouteBase>[
     // GoRoute(
     //   path: '/',
@@ -37,8 +42,8 @@ final GoRouter _router = GoRouter(
     //   },
     // ),
     GoRoute(
-      name: '/',
-      path: '/',
+      name: '/home',
+      path: '/home',
       builder: (BuildContext context, GoRouterState state) {
         return const HomePage();
       },
@@ -55,6 +60,34 @@ final GoRouter _router = GoRouter(
       path: '/imagecamera',
       builder: (BuildContext context, GoRouterState state) {
         return const ImagePickerCamera();
+      },
+    ),
+    GoRoute(
+      name: '/transactions',
+      path: '/transactions',
+      builder: (BuildContext context, GoRouterState state) {
+        return const Transactions();
+      },
+    ),
+    GoRoute(
+      name: '/addExpense',
+      path: '/addExpense',
+      builder: (BuildContext context, GoRouterState state) {
+        return const AddExpensePage();
+      },
+    ),
+    GoRoute(
+      name: '/budget',
+      path: '/budget',
+      builder: (BuildContext context, GoRouterState state) {
+        return const BudgetPage();
+      },
+    ),
+    GoRoute(
+      name: '/profile',
+      path: '/profile',
+      builder: (BuildContext context, GoRouterState state) {
+        return const ProfilePage();
       },
     ),
   ],

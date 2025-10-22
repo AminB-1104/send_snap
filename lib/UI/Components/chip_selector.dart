@@ -20,21 +20,31 @@ class FilterSelector extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           final filter = filters[index];
           final isSelected = filter == selectedFilter;
 
-          return ChoiceChip(
-            label: Text(filter),
-            selected: isSelected,
-            selectedColor: const Color(0xAA7F3DFF),
-            backgroundColor: Colors.grey[200],
-            labelStyle: TextStyle(
-              color: isSelected ? Colors.white : Colors.black,
-              fontWeight: FontWeight.w600,
+          return Center(
+            child: ChoiceChip(
+              label: Text(filter),
+              backgroundColor: Colors.white,
+              selected: isSelected,
+              selectedColor: const Color(0xffFCEED4),
+              // backgroundColor: Colors.grey[200],
+              labelStyle: TextStyle(
+                color: isSelected ? Color(0xffFCAC12) : Color(0xff91919F),
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+              showCheckmark: false,
+              elevation: 0,
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 8),
+              onSelected: (_) => onFilterChanged(filter),
             ),
-            onSelected: (_) => onFilterChanged(filter),
           );
         },
       ),

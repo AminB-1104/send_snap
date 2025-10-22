@@ -42,7 +42,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
     final purple = const Color(0xFF7F3DFF);
 
     return AppBar(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       elevation: 0,
       centerTitle: true,
       automaticallyImplyLeading: false,
@@ -50,9 +50,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
       leading: Padding(
         padding: const EdgeInsets.only(left: 16),
         child: GestureDetector(
-          onTap: () {
-            // TODO: navigate to profile
-          },
+          onTap: () {},
           child: CircleAvatar(
             radius: 20,
             backgroundColor: Colors.grey.shade300,
@@ -88,7 +86,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: m == widget.selectedMonth
-                        ? const Color(0xAA7F3DFF)
+                        ? const Color(0xFF7F3DFF)
                         : Colors.black,
                   ),
                 ),
@@ -115,7 +113,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                   width: 20,
                   height: 20,
                   colorFilter: const ColorFilter.mode(
-                    Color(0xAA7F3DFF),
+                    Color(0xFF7F3DFF),
                     BlendMode.srcIn,
                   ),
                 ),
@@ -147,15 +145,13 @@ class _HomeAppBarState extends State<HomeAppBar> {
             icon: SvgPicture.asset(
               'assets/icons/notification.svg',
               colorFilter: const ColorFilter.mode(
-                Color(0xAA7F3DFF),
+                Color(0xFF7F3DFF),
                 BlendMode.srcIn,
               ),
-              width: 24,
-              height: 24,
+              width: 34,
+              height: 34,
             ),
-            onPressed: () {
-              // TODO: navigate to notifications
-            },
+            onPressed: () {},
           ),
         ),
       ],

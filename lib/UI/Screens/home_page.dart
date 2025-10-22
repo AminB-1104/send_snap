@@ -1,14 +1,18 @@
-// lib/UI/Pages/home_page.dart (or wherever HomePage is)
+// lib/UI/Pages/home_page.dart
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:send_snap/Data/Models/category_model.dart';
 import 'package:send_snap/Data/Models/expense_model.dart';
 import 'package:send_snap/Services/hive_service.dart';
 import 'package:send_snap/UI/Components/appbar.dart';
+import 'package:send_snap/UI/Components/bottombar.dart';
 import 'package:send_snap/UI/Components/dashboard_card.dart';
 import 'package:send_snap/UI/Components/chip_selector.dart';
+import 'package:send_snap/UI/Components/expense_line_chart.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,24 +23,42 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   CategoryModel? selectedCategory;
-
   int selectedMonth = DateTime.now().month;
   String selectedFilter = 'Today'; // default selected chip
 
-  @override
-  void initState() {
-    super.initState();
-    // No longer storing filteredExpenses in state — we compute it live in the builder
+  void _onMonthChanged(int month) {
+    setState(() => selectedMonth = month);
   }
 
-  // Helper to compute the date range based on selectedFilter and selectedMonth
-  DateTimeRange _computeRange(DateTime now) {
+  void _onFilterChanged(String filter) {
+    setState(() => selectedFilter = filter);
+  }
+
+  ExpenseFilter _mapFilterStringToEnum(String filter) {
+    switch (filter) {
+      case 'Today':
+        return ExpenseFilter.today;
+      case 'Week':
+        return ExpenseFilter.week;
+      case 'Month':
+        return ExpenseFilter.month;
+      case 'Year':
+        return ExpenseFilter.year;
+      default:
+        return ExpenseFilter.week;
+    }
+  }
+
+  // filters a list of expenses by date range + category (for recent transactions)
+  List<ExpenseModel> _applyFilters(List<ExpenseModel> allExpenses) {
+    final now = DateTime.now();
+
     late DateTime start;
     late DateTime end;
 
     switch (selectedFilter) {
       case 'Week':
-        final weekday = now.weekday; // monday=1
+        final weekday = now.weekday;
         start = DateTime(
           now.year,
           now.month,
@@ -58,41 +80,21 @@ class _HomePageState extends State<HomePage> {
         break;
 
       default: // Today
-        start = DateTime(now.year, now.month, now.day);
-        end = start.add(const Duration(days: 1));
+        start = DateTime(now.year, now.month, now.day, 0, 0, 0);
+        end = DateTime(now.year, now.month, now.day, 23, 59, 59);
         break;
     }
 
-    return DateTimeRange(start: start, end: end);
-  }
-
-  // filters a list of expenses by date range + category (if selected)
-  List<ExpenseModel> _applyFilters(List<ExpenseModel> allExpenses) {
-    final now = DateTime.now();
-    final range = _computeRange(now);
-
-    final results = allExpenses.where((e) {
+    return allExpenses.where((e) {
       final d = e.date;
       final inRange =
-          (d.isAtSameMomentAs(range.start) || d.isAfter(range.start)) &&
-          (d.isBefore(range.end) || d.isAtSameMomentAs(range.end));
-      if (!inRange) return false;
+          (d.isAtSameMomentAs(start) || d.isAfter(start)) &&
+          (d.isBefore(end) || d.isAtSameMomentAs(end));
 
+      if (!inRange) return false;
       if (selectedCategory == null) return true;
       return e.category == selectedCategory!.name;
     }).toList();
-
-    return results;
-  }
-
-  void _onMonthChanged(int month) {
-    setState(() => selectedMonth = month);
-    // No further action needed; the ValueListenableBuilder will rebuild and call _applyFilters
-  }
-
-  void _onFilterChanged(String filter) {
-    setState(() => selectedFilter = filter);
-    // UI rebuilds automatically
   }
 
   @override
@@ -101,7 +103,7 @@ class _HomePageState extends State<HomePage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       appBar: HomeAppBar(
         profileImage: 'assets/images/avatar.png',
         selectedMonth: selectedMonth,
@@ -112,14 +114,20 @@ class _HomePageState extends State<HomePage> {
           valueListenable: HiveService.expenses.listenable(),
           builder: (context, Box<ExpenseModel> box, _) {
             final allExpenses = box.values.toList().cast<ExpenseModel>();
-
-            // compute filtered list live (so Hive updates are reflected immediately)
             final visibleExpenses = _applyFilters(allExpenses);
 
             return CustomScrollView(
               slivers: [
                 // --- DASHBOARD CARD ---
                 SliverToBoxAdapter(child: DashboardCard(expenses: allExpenses)),
+
+                // --- EXPENSE LINE CHART ---
+                SliverToBoxAdapter(
+                  child: ExpenseLineChart(
+                    expenses: allExpenses, // pass ALL expenses
+                    selectedFilter: _mapFilterStringToEnum(selectedFilter),
+                  ),
+                ),
 
                 // --- FILTER SELECTOR (chips) ---
                 SliverToBoxAdapter(
@@ -139,13 +147,45 @@ class _HomePageState extends State<HomePage> {
                       horizontal: 20,
                       vertical: 16,
                     ),
-                    child: Text(
-                      "Recent Transactions",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Recent Transactions",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            context.pushNamed('/transactions');
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            backgroundColor: const Color(0xffEEE5FF),
+                            minimumSize: const Size(50, 30),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            elevation: 0,
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: const Text(
+                            "See all",
+                            style: TextStyle(
+                              color: Color(0xFF7F3DFF),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -164,6 +204,17 @@ class _HomePageState extends State<HomePage> {
                     : SliverList(
                         delegate: SliverChildBuilderDelegate((context, index) {
                           final expense = visibleExpenses[index];
+                          final category = HiveService.categories.values
+                              .firstWhere(
+                                (c) => c.name == expense.category,
+                                orElse: () => CategoryModel(
+                                  id: 0,
+                                  name: "?",
+                                  iconsvg: "",
+                                  iconcolor: 0xFF7F3DFF,
+                                ),
+                              );
+
                           return Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -175,70 +226,68 @@ class _HomePageState extends State<HomePage> {
                                     ? const Color(0xFF2A2A2A)
                                     : Colors.white,
                                 borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  if (!isDark)
-                                    BoxShadow(
-                                      color: Colors.black12,
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                ],
                               ),
                               child: ListTile(
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 8,
                                 ),
-                                leading:
-                                    expense.imagepath.isNotEmpty &&
-                                        File(expense.imagepath).existsSync()
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.file(
-                                          File(expense.imagepath),
-                                          width: 50,
-                                          height: 50,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      )
-                                    : CircleAvatar(
-                                        radius: 25,
-                                        backgroundColor: const Color(
-                                          0xFFEEE5FF,
-                                        ),
-                                        child: Text(
-                                          expense.category.isNotEmpty
-                                              ? expense.category[0]
-                                                    .toUpperCase()
-                                              : "?",
-                                          style: const TextStyle(
-                                            color: Color(0xFF7F3DFF),
-                                            fontWeight: FontWeight.bold,
+                                leading: Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: category.color.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: category.iconsvg.isNotEmpty
+                                      ? Center(
+                                          child: SvgPicture.asset(
+                                            category.iconsvg,
+                                            colorFilter: ColorFilter.mode(
+                                              category.color,
+                                              BlendMode.srcIn,
+                                            ),
+                                            width: 28,
+                                            height: 28,
+                                          ),
+                                        )
+                                      : Center(
+                                          child: Text(
+                                            expense.category.isNotEmpty
+                                                ? expense.category[0]
+                                                      .toUpperCase()
+                                                : "?",
+                                            style: const TextStyle(
+                                              color: Color(0xFF7F3DFF),
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                ),
                                 title: Text(
-                                  expense.merchant,
+                                  expense.category,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
                                   ),
                                 ),
                                 subtitle: Text(
-                                  expense.date.toLocal().toString().split(
-                                    ' ',
-                                  )[0],
+                                  expense.note.isNotEmpty
+                                      ? expense.note
+                                      : expense.merchant,
                                   style: TextStyle(
                                     color: Colors.grey[600],
                                     fontSize: 13,
                                   ),
                                 ),
                                 trailing: Text(
-                                  "${expense.currency} ${expense.total.toStringAsFixed(2)}",
+                                  "- ${expense.total.toStringAsFixed(2)}",
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF7F3DFF),
+                                    color: Color(0xFFFD3C4A),
                                   ),
                                 ),
                                 onTap: () =>
@@ -253,84 +302,62 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
-
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF7F3DFF),
-        onPressed: () => _showAddExpenseDialog(context),
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: SizedBox(
+        width: 60,
+        height: 60,
+        child: FloatingActionButton(
+          backgroundColor: const Color(0xFF7F3DFF),
+          elevation: 0,
+          shape: const CircleBorder(),
+          onPressed: () {
+            context.pushNamed('/addExpense');
+          },
+          child: Transform.rotate(
+            angle: 25 * math.pi / 100,
+            child: SvgPicture.asset(
+              width: 40,
+              height: 40,
+              'assets/icons/close.svg',
+              colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+            ),
+          ),
+        ),
       ),
-    );
-  }
-
-  // ... keep your existing helper dialogs (unchanged) ...
-  void _showAddExpenseDialog(BuildContext context) {
-    // unchanged
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add an Expense'),
-          content: const Text('How would you like to add an expense?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.push('/imagegallery');
-              },
-              child: const Text('From Gallery'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.push('/imagecamera');
-              },
-              child: const Text('Use Camera'),
-            ),
-          ],
-        );
-      },
+      bottomNavigationBar: BottomNavBar(currentIndex: 0),
     );
   }
 
   void _showExpenseDetails(BuildContext context, ExpenseModel expense) {
-    // unchanged
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(expense.merchant),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                if (expense.imagepath.isNotEmpty &&
-                    File(expense.imagepath).existsSync())
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: Image.file(File(expense.imagepath)),
-                  ),
-                Text(
-                  'Total: ${expense.currency} ${expense.total.toStringAsFixed(2)}',
+      builder: (context) => AlertDialog(
+        title: Text(expense.merchant),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              if (expense.imagepath.isNotEmpty &&
+                  File(expense.imagepath).existsSync())
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Image.file(File(expense.imagepath)),
                 ),
-                Text(
-                  'Date: ${expense.date.toLocal().toString().split(' ')[0]}',
-                ),
-                Text('Category: ${expense.category}'),
-                if (expense.note.isNotEmpty) Text('Note: ${expense.note}'),
-              ],
-            ),
+              Text(
+                'Total: ${expense.currency} ${expense.total.toStringAsFixed(2)}',
+              ),
+              Text('Date: ${expense.date.toLocal().toString().split(' ')[0]}'),
+              Text('Category: ${expense.category}'),
+              if (expense.note.isNotEmpty) Text('Note: ${expense.note}'),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Close'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Close'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
     );
   }
 }

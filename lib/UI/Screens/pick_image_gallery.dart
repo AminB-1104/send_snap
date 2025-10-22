@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:hive/hive.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -6,7 +8,6 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:send_snap/Data/Models/expense_model.dart';
 import 'package:send_snap/Data/Models/item_model.dart';
 import 'package:send_snap/Services/hive_service.dart';
-import 'package:send_snap/UI/Components/appbar.dart';
 import '../../Data/Models/category_model.dart';
 
 class ImagePickerGallery extends StatefulWidget {

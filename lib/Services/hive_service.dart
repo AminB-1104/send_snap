@@ -5,7 +5,6 @@ import 'package:send_snap/Data/Models/category_model.dart';
 import 'package:send_snap/Data/Models/expense_model.dart';
 import 'package:send_snap/Data/Models/item_model.dart';
 
-
 class HiveService {
   static late Box<ExpenseModel> _expenseBox;
   static late Box<CategoryModel> _categoryBox;

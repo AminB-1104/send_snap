@@ -1,25 +1,40 @@
+// ignore_for_file: deprecated_member_use
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:send_snap/Services/hive_service.dart';
 import '../Models/category_model.dart';
 
 class CategorySeeder {
   static Future<void> seedCategories() async {
-    final box = Hive.box<CategoryModel>('categories');
-
+    final box = HiveService.categories;
 
     if (box.isEmpty) {
-      final predefinedCategories = [
-        CategoryModel(id: 1, name: 'Food', iconsvg: '🍔'),
-        CategoryModel(id: 2, name: 'Transport', iconsvg: '🚌'),
-        CategoryModel(id: 3, name: 'Shopping', iconsvg: '🛍️'),
-        CategoryModel(id: 4, name: 'Utilities', iconsvg: '💡'),
-        CategoryModel(id: 5, name: 'Entertainment', iconsvg: '🎮'),
-        CategoryModel(id: 6, name: 'Health', iconsvg: '💊'),
-      ];
-
-      await box.addAll(predefinedCategories);
-      print('✅ Predefined categories seeded successfully');
-    } else {
-      print('⚡ Categories already exist — skipping seed.');
+      await box.addAll([
+        CategoryModel(
+          id: 1,
+          name: 'Food',
+          iconsvg: 'assets/icons/restaurant.svg',
+          iconcolor: const Color(0xffFD3C4A).value,
+        ),
+        CategoryModel(
+          id: 2,
+          name: 'Transport',
+          iconsvg: 'assets/icons/car.svg',
+          iconcolor: const Color(0xff0077FF).value,
+        ),
+        CategoryModel(
+          id: 3,
+          name: 'Shopping',
+          iconsvg: 'assets/icons/shopping-bag.svg',
+          iconcolor: const Color(0xffFCAC12).value,
+        ),
+        CategoryModel(
+          id: 5,
+          name: 'Subscription',
+          iconsvg: 'assets/icons/recurring-bill.svg',
+          iconcolor: const Color(0xff7F3DFF).value,
+        ),
+      ]);
     }
   }
 }

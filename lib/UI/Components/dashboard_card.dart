@@ -5,6 +5,8 @@ import 'package:send_snap/Data/Models/expense_model.dart';
 class DashboardCard extends StatelessWidget {
   final List<ExpenseModel> expenses;
 
+  final income = 5000;
+
   const DashboardCard({super.key, required this.expenses});
 
   @override
@@ -37,7 +39,7 @@ class DashboardCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              "\$9400",
+              "\$${income - total}",
               // "\$${total.toStringAsFixed(2)}",
               style: const TextStyle(
                 fontFamily: 'Inter',
@@ -99,7 +101,7 @@ class DashboardCard extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '\$5000',
+                              '\$${income}',
                               style: const TextStyle(
                                 fontFamily: 'Inter',
                                 color: Colors.white,
