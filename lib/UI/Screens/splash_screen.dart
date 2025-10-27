@@ -1,3 +1,121 @@
+// import 'dart:async';
+// import 'package:flutter/material.dart';
+// import 'package:send_snap/UI/Screens/home_page.dart';
+
+// class SplashScreen extends StatefulWidget {
+//   const SplashScreen({super.key});
+
+//   @override
+//   State<SplashScreen> createState() => _SplashScreenState();
+// }
+
+// class _SplashScreenState extends State<SplashScreen>
+//     with SingleTickerProviderStateMixin {
+//   double _opacity = 0.0;
+//   late AnimationController _controller;
+//   late Animation<double> _fadeOutAnimation;
+
+//   @override
+//   void initState() {
+//     super.initState();
+
+//     _controller = AnimationController(
+//       vsync: this,
+//       duration: const Duration(milliseconds: 1200), // smooth fade
+//     );
+
+//     _fadeOutAnimation = Tween<double>(
+//       begin: 1.0,
+//       end: 0.0,
+//     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+//     // Start fade after showing splash
+//     Future.delayed(const Duration(milliseconds: 500), () {
+//       setState(() {
+//         _opacity = 1.0;
+//       });
+//     });
+
+//     Timer(Duration(seconds: 3), () {
+//       // Adjust duration as needed
+//       Navigator.of(context).pushReplacement(
+//         MaterialPageRoute(
+//           builder: (context) => HomePage(),
+//         ), // Replace with your HomePage
+//       );
+//     });
+//   }
+
+//   @override
+//   void dispose() {
+//     _controller.dispose();
+//     super.dispose();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return AnimatedBuilder(
+//       animation: _controller,
+//       builder: (context, child) {
+//         return Stack(
+//           children: [
+//             // Home page behind splash
+//             Opacity(opacity: 1.0 - _fadeOutAnimation.value),
+
+//             // Splash content in front
+//             Opacity(
+//               opacity: _fadeOutAnimation.value,
+//               child: Scaffold(
+//                 body: Container(
+//                   width: double.infinity,
+//                   height: double.infinity,
+//                   color: const Color(0xFF7F3DFF),
+//                   child: Stack(
+//                     alignment: Alignment.center,
+//                     children: [
+//                       Center(
+//                         child: Container(
+//                           alignment: Alignment.centerLeft,
+//                           margin: const EdgeInsets.only(right: 70),
+//                           width: 40,
+//                           height: 40,
+//                           decoration: BoxDecoration(
+//                             shape: BoxShape.circle,
+//                             boxShadow: [
+//                               BoxShadow(
+//                                 color: const Color(
+//                                   0xFFFCAC12,
+//                                 ).withValues(alpha: 0.6),
+//                                 blurRadius: 50,
+//                                 spreadRadius: 20,
+//                               ),
+//                             ],
+//                           ),
+//                         ),
+//                       ),
+//                       const Center(
+//                         child: Text(
+//                           'sendSnap',
+//                           style: TextStyle(
+//                             color: Colors.white,
+//                             fontFamily: 'Inter',
+//                             fontWeight: FontWeight.w700,
+//                             fontSize: 42,
+//                           ),
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ],
+//         );
+//       },
+//     );
+//   }
+// }
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:send_snap/UI/Screens/home_page.dart';
@@ -11,107 +129,97 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  double _opacity = 0.0;
-  late AnimationController _controller;
-  late Animation<double> _fadeOutAnimation;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  bool _showSplash = true;
 
   @override
   void initState() {
     super.initState();
 
-    _controller = AnimationController(
+    _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200), // smooth fade
+      duration: const Duration(milliseconds: 800),
     );
 
-    _fadeOutAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _fadeAnimation =
+        Tween<double>(begin: 1.0, end: 0.0).animate(_fadeController)
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              setState(() {
+                _showSplash = false; // remove splash after fade
+              });
+            }
+          });
 
-    // Start fade after showing splash
-    Future.delayed(const Duration(milliseconds: 500), () {
-      setState(() {
-        _opacity = 1.0;
-      });
-    });
-
-    Timer(Duration(seconds: 3), () {
-      // Adjust duration as needed
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => HomePage(),
-        ), // Replace with your HomePage
-      );
+    // Wait a bit before fading out
+    Timer(const Duration(milliseconds: 3500), () {
+      _fadeController.forward();
     });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Stack(
-          children: [
-            // Home page behind splash
-            Opacity(opacity: 1.0 - _fadeOutAnimation.value),
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Your main screen underneath
+          const HomePage(),
 
-            // Splash content in front
-            Opacity(
-              opacity: _fadeOutAnimation.value,
-              child: Scaffold(
-                body: Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  color: const Color(0xFF7F3DFF),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Center(
-                        child: Container(
-                          alignment: Alignment.centerLeft,
-                          margin: const EdgeInsets.only(right: 70),
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(
-                                  0xFFFCAC12,
-                                ).withValues(alpha: 0.6),
-                                blurRadius: 50,
-                                spreadRadius: 20,
-                              ),
-                            ],
-                          ),
+          // Splash layer on top (fades out)
+          if (_showSplash)
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                color: const Color(0xFF7F3DFF),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Center(
+                      child: Container(
+                        alignment: Alignment.centerLeft,
+                        margin: const EdgeInsets.only(right: 70),
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFFFCAC12,
+                              ).withValues(alpha: 0.6),
+                              blurRadius: 50,
+                              spreadRadius: 20,
+                            ),
+                          ],
                         ),
                       ),
-                      const Center(
-                        child: Text(
-                          'sendSnap',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 42,
-                          ),
+                    ),
+                    const Center(
+                      child: Text(
+                        'sendSnap',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 42,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        );
-      },
+        ],
+      ),
     );
   }
 }

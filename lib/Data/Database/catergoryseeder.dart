@@ -1,6 +1,5 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:send_snap/Services/hive_service.dart';
 import '../Models/category_model.dart';
 

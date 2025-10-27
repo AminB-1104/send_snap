@@ -26,7 +26,28 @@ class HiveService {
     await CategorySeeder.seedCategories(); // ensure predefined categories exist
   }
 
+  // Getters
   static Box<ExpenseModel> get expenses => _expenseBox;
   static Box<CategoryModel> get categories => _categoryBox;
   static Box<ItemsModel> get items => _itemsBox;
+
+  // --------------------------
+  // Expense CRUD Helpers
+  // --------------------------
+
+  static Future<int> addExpense(ExpenseModel expense) async {
+    return await _expenseBox.add(expense);
+  }
+
+  static Future<void> updateExpense(ExpenseModel expense) async {
+    await expense.save();
+  }
+
+  static Future<void> deleteExpense(ExpenseModel expense) async {
+    await expense.delete();
+  }
+
+  static Future<void> clearAllExpenses() async {
+    await _expenseBox.clear();
+  }
 }

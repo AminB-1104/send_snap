@@ -11,7 +11,9 @@ import 'package:send_snap/Services/receipt_scanner_service.dart';
 
 class AddExpensePage extends StatefulWidget {
   final Function(CategoryModel?)? onChanged;
-  const AddExpensePage({super.key, this.onChanged});
+  final ExpenseModel? expenseToEdit;
+
+  const AddExpensePage({super.key, this.onChanged, this.expenseToEdit});
 
   @override
   State<AddExpensePage> createState() => _AddExpensePageState();
@@ -87,7 +89,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
     });
   }
 
-  void _saveExpense() {
+  void _saveExpense() async {
     setState(() {
       _totalEmpty = _totalController.text.isEmpty;
       _dateEmpty = _dateController.text.isEmpty;
@@ -96,50 +98,60 @@ class _AddExpensePageState extends State<AddExpensePage> {
     });
 
     if (_totalEmpty || _dateEmpty || _noteEmpty || _categoryEmpty) {
-      // Optional: still show snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all required fields')),
       );
       return;
     }
 
-    // Parse values
-    final merchant = _merchantController.text;
     final dateParts = _dateController.text.split('/');
     final date = DateTime(
       int.parse(dateParts[2]),
       int.parse(dateParts[1]),
       int.parse(dateParts[0]),
     );
-    final total = num.tryParse(_totalController.text) ?? 0;
-    final currency = _currencyController.text;
-    final category = selectedCategory!.name;
-    final note = _noteController.text;
 
-    final items = _itemControllers
-        .map((c) => c.text)
-        .where((e) => e.isNotEmpty)
-        .toList();
-    final imagepath = _image?.path ?? '';
-    final id = DateTime.now().millisecondsSinceEpoch;
+    final expense =
+        widget.expenseToEdit ??
+        ExpenseModel(
+          id: DateTime.now().millisecondsSinceEpoch,
+          merchant: _merchantController.text,
+          date: date,
+          total: num.tryParse(_totalController.text) ?? 0,
+          currency: _currencyController.text,
+          category: selectedCategory!.name,
+          note: _noteController.text,
+          imagepath: _image?.path ?? '',
+          items: _itemControllers
+              .map((c) => c.text)
+              .where((e) => e.isNotEmpty)
+              .toList(),
+        );
 
-    final expense = ExpenseModel(
-      id: id,
-      merchant: merchant,
-      date: date,
-      total: total,
-      currency: currency,
-      category: category,
-      note: note,
-      imagepath: imagepath,
-      items: items,
-    );
+    // If editing, update fields
+    if (widget.expenseToEdit != null) {
+      expense.merchant = _merchantController.text;
+      expense.date = date;
+      expense.total = num.tryParse(_totalController.text) ?? 0;
+      expense.currency = _currencyController.text;
+      expense.category = selectedCategory!.name;
+      expense.note = _noteController.text;
+      expense.imagepath = _image?.path ?? '';
+      expense.items = _itemControllers
+          .map((c) => c.text)
+          .where((e) => e.isNotEmpty)
+          .toList();
 
-    HiveService.expenses.add(expense);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Expense added successfully!')),
-    );
+      await expense.save();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Expense updated successfully!')),
+      );
+    } else {
+      HiveService.expenses.add(expense);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Expense added successfully!')),
+      );
+    }
 
     Navigator.pop(context);
   }
@@ -148,6 +160,27 @@ class _AddExpensePageState extends State<AddExpensePage> {
   void initState() {
     super.initState();
     _currencyController.text = 'USD'; // default currency
+
+    // If editing, prefill everything
+    final editing = widget.expenseToEdit;
+    if (editing != null) {
+      _merchantController.text = editing.merchant;
+      _dateController.text =
+          "${editing.date.day}/${editing.date.month}/${editing.date.year}";
+      _totalController.text = editing.total.toString();
+      _currencyController.text = editing.currency;
+      _noteController.text = editing.note;
+      selectedCategory = HiveService.categories.values.firstWhere(
+        (cat) => cat.name == editing.category,
+        orElse: () => HiveService.categories.values.first,
+      );
+      _image = editing.imagepath.isNotEmpty ? File(editing.imagepath) : null;
+
+      // Prefill items
+      for (final item in editing.items) {
+        _itemControllers.add(TextEditingController(text: item));
+      }
+    }
   }
 
   @override
@@ -649,8 +682,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 ),
                 backgroundColor: Color(0xFF7F3DFF),
               ),
-              child: const Text(
-                "Add Expense",
+              child: Text(
+                widget.expenseToEdit != null ? "Save Changes" : "Add Expense",
                 style: TextStyle(
                   color: Colors.white,
                   fontFamily: 'Inter',

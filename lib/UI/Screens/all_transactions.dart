@@ -1,15 +1,16 @@
 import 'dart:io';
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 import 'package:send_snap/Data/Models/category_model.dart';
 import 'package:send_snap/Data/Models/expense_model.dart';
 import 'package:send_snap/Services/hive_service.dart';
-import 'package:send_snap/UI/Components/appbar.dart';
 import 'package:send_snap/UI/Components/bottombar.dart';
+import 'package:send_snap/UI/Components/month_dropdown.dart';
+import 'package:send_snap/UI/Screens/add_expenses.dart';
 
 class Transactions extends StatefulWidget {
   const Transactions({super.key});
@@ -19,11 +20,196 @@ class Transactions extends StatefulWidget {
 }
 
 class _TransactionsState extends State<Transactions> {
+  // int selectedMonth = DateTime.now().month;
+  List<ExpenseModel>? _filteredExpenses;
   int selectedMonth = DateTime.now().month;
 
-  void _onMonthChanged(int month) {
-    setState(() => selectedMonth = month);
+  void _openFilterModal() {
+    String? selectedCategory;
+    String? selectedSort;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        final categories = HiveService.categories.values.toList();
+
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              final sortOptions = ['Newest', 'Oldest', 'Highest', 'Lowest'];
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                // crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 5,
+                    width: 40,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Center(
+                        child: Text(
+                          "Filter & Sort",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // --- Sort Section ---
+                      const Text(
+                        "Sort by",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        children: sortOptions.map((option) {
+                          final isSelected = selectedSort == option;
+                          return ChoiceChip(
+                            backgroundColor: Color(0xAAEEE5FF),
+                            showCheckmark: false,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadiusGeometry.circular(24),
+                            ),
+                            side: BorderSide.none,
+                            label: Text(option),
+                            selected: isSelected,
+
+                            // selectedColor: const Color(
+                            //   0xFF7F3DFF,
+                            // ).withValues(alpha: 0.2),
+                            labelStyle: TextStyle(
+                              color: isSelected
+                                  ? const Color(0xFF7F3DFF)
+                                  : Colors.black,
+                            ),
+                            onSelected: (_) {
+                              setModalState(() {
+                                selectedSort = option;
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 25),
+
+                      // --- Category Section ---
+                      const Text(
+                        "Filter by Category",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        children: categories.map((cat) {
+                          final isSelected = selectedCategory == cat.name;
+                          return ChoiceChip(
+                            backgroundColor: Color(0xAAEEE5FF),
+                            showCheckmark: false,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadiusGeometry.circular(24),
+                            ),
+                            side: BorderSide.none,
+                            label: Text(cat.name),
+                            selected: isSelected,
+                            selectedColor: cat.color.withValues(alpha: 0.2),
+                            labelStyle: TextStyle(
+                              color: isSelected ? cat.color : Colors.black,
+                            ),
+                            onSelected: (_) {
+                              setModalState(() {
+                                selectedCategory = cat.name;
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // --- Apply Button ---
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7F3DFF),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _applyFilters(selectedCategory, selectedSort);
+                          },
+                          child: const Text(
+                            "Apply Filters",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
   }
+
+  void _applyFilters(String? category, String? sortOption) {
+    final box = HiveService.expenses;
+    List<ExpenseModel> filtered = box.values.toList();
+
+    // Filter by category
+    if (category != null && category.isNotEmpty) {
+      filtered = filtered.where((e) => e.category == category).toList();
+    }
+
+    if (selectedMonth != 0) {
+      filtered = filtered.where((e) => e.date.month == selectedMonth).toList();
+    }
+
+    // Sort
+    switch (sortOption) {
+      case 'Newest':
+        filtered.sort((a, b) => b.date.compareTo(a.date));
+        break;
+      case 'Oldest':
+        filtered.sort((a, b) => a.date.compareTo(b.date));
+        break;
+      case 'Highest':
+        filtered.sort((a, b) => b.total.compareTo(a.total));
+        break;
+      case 'Lowest':
+        filtered.sort((a, b) => a.total.compareTo(b.total));
+        break;
+    }
+
+    setState(() {
+      _filteredExpenses = filtered;
+    });
+  }
+
+  // UI
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +219,7 @@ class _TransactionsState extends State<Transactions> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        centerTitle: true,
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         leading: IconButton(
@@ -41,11 +228,35 @@ class _TransactionsState extends State<Transactions> {
           },
           icon: SvgPicture.asset('assets/icons/arrow-left.svg'),
         ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MonthDropdown(
+              selectedMonth: selectedMonth,
+              onMonthChanged: (month) {
+                setState(() {
+                  selectedMonth = month;
+                });
+                _applyFilters(null, null);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: SvgPicture.asset(
+              'assets/icons/sort.svg',
+              colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcIn),
+            ),
+            onPressed: _openFilterModal,
+          ),
+        ],
       ),
       body: ValueListenableBuilder(
         valueListenable: HiveService.expenses.listenable(),
         builder: (context, Box<ExpenseModel> box, _) {
-          final allExpenses = box.values.toList().cast<ExpenseModel>();
+          final allExpenses =
+              _filteredExpenses ?? box.values.toList().cast<ExpenseModel>();
 
           if (allExpenses.isEmpty) {
             return const Center(
@@ -56,100 +267,113 @@ class _TransactionsState extends State<Transactions> {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            itemCount: allExpenses.length,
-            itemBuilder: (context, index) {
-              final expense = allExpenses[index];
-
-              final category = HiveService.categories.values.firstWhere(
-                (c) => c.name == expense.category,
-                orElse: () => CategoryModel(
-                  id: 0,
-                  name: "?",
-                  iconsvg: "",
-                  iconcolor: 0xFF7F3DFF,
-                ),
-              );
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    leading: category.iconsvg.isNotEmpty
-                        ? Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: category.color.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Center(
-                              child: SvgPicture.asset(
-                                category.iconsvg,
-                                colorFilter: ColorFilter.mode(
-                                  category.color,
-                                  BlendMode.srcIn,
-                                ),
-                                width: 28,
-                                height: 28,
-                              ),
-                            ),
-                          )
-                        : Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: category.color.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Center(
-                              child: Text(
-                                expense.category.isNotEmpty
-                                    ? expense.category[0].toUpperCase()
-                                    : "?",
-                                style: const TextStyle(
-                                  color: Color(0xFF7F3DFF),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                    title: Text(
-                      expense.category,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
-                    subtitle: Text(
-                      expense.note.isNotEmpty ? expense.note : expense.merchant,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    ),
-                    trailing: Text(
-                      "- ${expense.total.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFFD3C4A),
-                      ),
-                    ),
-                    onTap: () => _showExpenseDetails(context, expense),
-                  ),
-                ),
-              );
+          return LiquidPullToRefresh(
+            onRefresh: () async {
+              await Future.delayed(const Duration(milliseconds: 800));
+              setState(() {});
             },
+            color: Color(0xFF7F3DFF),
+            backgroundColor: Colors.white,
+            showChildOpacityTransition: false,
+            height: 200,
+            animSpeedFactor: 3,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              itemCount: allExpenses.length,
+              itemBuilder: (context, index) {
+                final expense = allExpenses[index];
+
+                final category = HiveService.categories.values.firstWhere(
+                  (c) => c.name == expense.category,
+                  orElse: () => CategoryModel(
+                    id: 0,
+                    name: "?",
+                    iconsvg: "",
+                    iconcolor: 0xFF7F3DFF,
+                  ),
+                );
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      leading: category.iconsvg.isNotEmpty
+                          ? Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: category.color.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Center(
+                                child: SvgPicture.asset(
+                                  category.iconsvg,
+                                  colorFilter: ColorFilter.mode(
+                                    category.color,
+                                    BlendMode.srcIn,
+                                  ),
+                                  width: 28,
+                                  height: 28,
+                                ),
+                              ),
+                            )
+                          : Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: category.color.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  expense.category.isNotEmpty
+                                      ? expense.category[0].toUpperCase()
+                                      : "?",
+                                  style: const TextStyle(
+                                    color: Color(0xFF7F3DFF),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                      title: Text(
+                        expense.category,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Text(
+                        expense.note.isNotEmpty
+                            ? expense.note
+                            : expense.merchant,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                      trailing: Text(
+                        "- ${expense.total.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFD3C4A),
+                        ),
+                      ),
+                      onTap: () => _showExpenseDetails(context, expense),
+                    ),
+                  ),
+                );
+              },
+            ),
           );
         },
       ),
@@ -175,40 +399,244 @@ class _TransactionsState extends State<Transactions> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBar(currentIndex: 0),
+      bottomNavigationBar: BottomNavBar(currentIndex: 1),
     );
   }
 
   void _showExpenseDetails(BuildContext context, ExpenseModel expense) {
+    final category = HiveService.categories.values.firstWhere(
+      (c) => c.name == expense.category,
+      orElse: () =>
+          CategoryModel(id: 0, name: "?", iconsvg: "", iconcolor: 0xFF7F3DFF),
+    );
+
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle Bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Category Icon
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: category.color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Center(
+                  child: SvgPicture.asset(
+                    category.iconsvg,
+                    colorFilter: ColorFilter.mode(
+                      category.color,
+                      BlendMode.srcIn,
+                    ),
+                    width: 30,
+                    height: 30,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Amount
+              Text(
+                "${expense.currency} ${expense.total.toStringAsFixed(2)}",
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: category.color,
+                ),
+              ),
+              const SizedBox(height: 4),
+
+              // Merchant / Note
+              Text(
+                expense.merchant.isNotEmpty
+                    ? expense.merchant
+                    : expense.note.isNotEmpty
+                    ? expense.note
+                    : expense.category,
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 16),
+
+              // Optional Image
+              if (expense.imagepath.isNotEmpty &&
+                  File(expense.imagepath).existsSync())
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    File(expense.imagepath),
+                    height: 150,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+
+              const SizedBox(height: 20),
+
+              // Date and Category info
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _infoTile(
+                    "Date",
+                    expense.date.toLocal().toString().split(' ')[0],
+                  ),
+                  _infoTile("Category", expense.category),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                AddExpensePage(expenseToEdit: expense),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: Color(0xFF7F3DFF),
+                        side: const BorderSide(color: Color(0xFF7F3DFF)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: SvgPicture.asset(
+                        "assets/icons/edit.svg",
+                        width: 24,
+                        height: 24,
+                        colorFilter: ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                      label: const Text(
+                        "Edit",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _confirmDelete(context, expense);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFD3C4A),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: SvgPicture.asset(
+                        "assets/icons/trash.svg",
+                        width: 24,
+                        height: 24,
+                        colorFilter: ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                      label: const Text(
+                        "Delete",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _infoTile(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Color(0xFF91919F), fontSize: 13),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+        ),
+      ],
+    );
+  }
+
+  void _confirmDelete(BuildContext context, ExpenseModel expense) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(expense.merchant),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                if (expense.imagepath.isNotEmpty &&
-                    File(expense.imagepath).existsSync())
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: Image.file(File(expense.imagepath)),
-                  ),
-                Text(
-                  'Total: ${expense.currency} ${expense.total.toStringAsFixed(2)}',
-                ),
-                Text(
-                  'Date: ${expense.date.toLocal().toString().split(' ')[0]}',
-                ),
-                Text('Category: ${expense.category}'),
-                if (expense.note.isNotEmpty) Text('Note: ${expense.note}'),
-              ],
-            ),
+          title: const Text("Delete Expense"),
+          content: const Text(
+            "Are you sure you want to delete this expense? This action cannot be undone.",
           ),
-          actions: <Widget>[
+          actions: [
             TextButton(
-              child: const Text('Close'),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                HiveService.deleteExpense(expense);
+                Navigator.pop(context);
+              },
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Color(0xFFFD3C4A)),
+              ),
             ),
           ],
         );

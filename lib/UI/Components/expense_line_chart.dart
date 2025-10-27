@@ -26,7 +26,9 @@ class ExpenseLineChart extends StatelessWidget {
         case ExpenseFilter.week:
           final weekStart = now.subtract(Duration(days: now.weekday - 1));
           final weekEnd = weekStart.add(const Duration(days: 6));
-          return expDate.isAfter(weekStart.subtract(const Duration(seconds: 1))) &&
+          return expDate.isAfter(
+                weekStart.subtract(const Duration(seconds: 1)),
+              ) &&
               expDate.isBefore(weekEnd.add(const Duration(days: 1)));
         case ExpenseFilter.month:
           return expDate.year == now.year && expDate.month == now.month;
@@ -55,10 +57,9 @@ class ExpenseLineChart extends StatelessWidget {
       grouped[x] = (grouped[x] ?? 0) + exp.total.toDouble();
     }
 
-    final spots = grouped.entries
-        .map((e) => FlSpot(e.key.toDouble(), e.value))
-        .toList()
-      ..sort((a, b) => a.x.compareTo(b.x));
+    final spots =
+        grouped.entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList()
+          ..sort((a, b) => a.x.compareTo(b.x));
 
     if (spots.isEmpty) spots.add(const FlSpot(0, 0));
 
@@ -70,7 +71,7 @@ class ExpenseLineChart extends StatelessWidget {
     final spots = _getChartSpots();
 
     return SizedBox(
-      height: 200,
+      height: 180,
       child: LineChart(
         LineChartData(
           lineBarsData: [
@@ -78,17 +79,31 @@ class ExpenseLineChart extends StatelessWidget {
               spots: spots,
               isCurved: true,
               color: const Color(0xFF7F3DFF),
-              barWidth: 3,
-              dotData: FlDotData(show: true),
+              barWidth: 6,
+              dotData: FlDotData(show: false),
+              isStrokeCapRound: true,
+              isStrokeJoinRound: true,
               belowBarData: BarAreaData(
                 show: true,
-                color: const Color(0xFF7F3DFF).withOpacity(0.2),
+                gradient: LinearGradient(
+                  colors: [
+                    Color.fromARGB(255, 189, 156, 255),
+                    Color.fromARGB(255, 189, 156, 255),
+                    // Color.fromARGB(159, 213, 192, 255),
+                    Color.fromARGB(11, 255, 255, 255),
+                  ],
+                  begin: AlignmentGeometry.topCenter,
+                  end: AlignmentGeometry.bottomCenter,
+                ),
+                // color: const Color(0xFF7F3DFF).withOpacity(0.2),
               ),
+              // preventCurveOverShooting: true,
             ),
           ],
           titlesData: FlTitlesData(
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            show: false,
+            // leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            // bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
           gridData: FlGridData(show: false),
           borderData: FlBorderData(show: false),

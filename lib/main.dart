@@ -5,10 +5,8 @@ import 'package:send_snap/UI/Screens/add_expenses.dart';
 import 'package:send_snap/UI/Screens/all_transactions.dart';
 import 'package:send_snap/UI/Screens/budget.dart';
 import 'package:send_snap/UI/Screens/home_page.dart';
-import 'package:send_snap/UI/Screens/pick_image_camera.dart';
-import 'package:send_snap/UI/Screens/pick_image_gallery.dart';
 import 'package:send_snap/UI/Screens/profile.dart';
-// import 'package:send_snap/UI/Screens/splash_screen.dart';
+import 'package:send_snap/UI/Screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,14 +31,14 @@ class MyApp extends StatelessWidget {
 }
 
 final GoRouter _router = GoRouter(
-  initialLocation: '/home',
+  // initialLocation: '/home',
   routes: <RouteBase>[
-    // GoRoute(
-    //   path: '/',
-    //   builder: (BuildContext context, GoRouterState state) {
-    //     return SplashScreen();
-    //   },
-    // ),
+    GoRoute(
+      path: '/',
+      builder: (BuildContext context, GoRouterState state) {
+        return SplashScreen();
+      },
+    ),
     GoRoute(
       name: '/home',
       path: '/home',
@@ -48,20 +46,20 @@ final GoRouter _router = GoRouter(
         return const HomePage();
       },
     ),
-    GoRoute(
-      name: '/imagegallery',
-      path: '/imagegallery',
-      builder: (BuildContext context, GoRouterState state) {
-        return const ImagePickerGallery();
-      },
-    ),
-    GoRoute(
-      name: '/imagecamera',
-      path: '/imagecamera',
-      builder: (BuildContext context, GoRouterState state) {
-        return const ImagePickerCamera();
-      },
-    ),
+    // GoRoute(
+    //   name: '/imagegallery',
+    //   path: '/imagegallery',
+    //   builder: (BuildContext context, GoRouterState state) {
+    //     return const ImagePickerGallery();
+    //   },
+    // ),
+    // GoRoute(
+    //   name: '/imagecamera',
+    //   path: '/imagecamera',
+    //   builder: (BuildContext context, GoRouterState state) {
+    //     return const ImagePickerCamera();
+    //   },
+    // ),
     GoRoute(
       name: '/transactions',
       path: '/transactions',
@@ -80,7 +78,7 @@ final GoRouter _router = GoRouter(
       name: '/budget',
       path: '/budget',
       builder: (BuildContext context, GoRouterState state) {
-        return const BudgetPage();
+        return const CreateBudgetPage();
       },
     ),
     GoRoute(
