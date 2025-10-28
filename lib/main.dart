@@ -4,6 +4,7 @@ import 'package:send_snap/Services/hive_service.dart';
 import 'package:send_snap/UI/Screens/add_expenses.dart';
 import 'package:send_snap/UI/Screens/all_transactions.dart';
 import 'package:send_snap/UI/Screens/budget.dart';
+import 'package:send_snap/UI/Screens/export_data.dart';
 import 'package:send_snap/UI/Screens/home_page.dart';
 import 'package:send_snap/UI/Screens/profile.dart';
 import 'package:send_snap/UI/Screens/splash_screen.dart';
@@ -46,20 +47,6 @@ final GoRouter _router = GoRouter(
         return const HomePage();
       },
     ),
-    // GoRoute(
-    //   name: '/imagegallery',
-    //   path: '/imagegallery',
-    //   builder: (BuildContext context, GoRouterState state) {
-    //     return const ImagePickerGallery();
-    //   },
-    // ),
-    // GoRoute(
-    //   name: '/imagecamera',
-    //   path: '/imagecamera',
-    //   builder: (BuildContext context, GoRouterState state) {
-    //     return const ImagePickerCamera();
-    //   },
-    // ),
     GoRoute(
       name: '/transactions',
       path: '/transactions',
@@ -86,6 +73,13 @@ final GoRouter _router = GoRouter(
       path: '/profile',
       builder: (BuildContext context, GoRouterState state) {
         return const ProfilePage();
+      },
+    ),
+    GoRoute(
+      name: '/export',
+      path: '/export',
+      builder: (BuildContext context, GoRouterState state) {
+        return const ExportDataPage();
       },
     ),
   ],

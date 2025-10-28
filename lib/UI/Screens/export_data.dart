@@ -1,0 +1,424 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:hive/hive.dart';
+import 'package:send_snap/Data/Models/category_model.dart';
+
+class ExportDataPage extends StatefulWidget {
+  const ExportDataPage({super.key});
+
+  @override
+  State<ExportDataPage> createState() => _ExportDataPageState();
+}
+
+class _ExportDataPageState extends State<ExportDataPage> {
+  String? selectedCategoriesText = 'All categories';
+  String? selectedDateRange = 'Last month';
+  String? selectedFormat = 'JSON';
+
+  late Future<Box<CategoryModel>> _categoryBoxFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoryBoxFuture = _openBox();
+  }
+
+  Future<Box<CategoryModel>> _openBox() async {
+    // if already open, just return it
+    if (Hive.isBoxOpen('categories')) {
+      return Hive.box<CategoryModel>('categories');
+    }
+    return await Hive.openBox<CategoryModel>('categories');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Box<CategoryModel>>(
+      future: _categoryBoxFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final categoryBox = snapshot.data!;
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            centerTitle: true,
+            backgroundColor: Colors.white,
+            leading: Container(
+              padding: const EdgeInsets.all(12),
+              child: SvgPicture.asset(
+                'assets/icons/arrow-left.svg',
+                colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                width: 32,
+                height: 32,
+              ),
+            ),
+            title: const Text(
+              'Export Data',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 18,
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                _buildOptionCard(
+                  title: 'What data do you want to export?',
+                  subtitle: selectedCategoriesText!,
+                  onTap: () => _openCategorySelector(categoryBox),
+                ),
+                const SizedBox(height: 16),
+                _buildOptionCard(
+                  title: 'When date range?',
+                  subtitle: selectedDateRange!,
+                  onTap: _openDateRangeSelector,
+                ),
+                const SizedBox(height: 16),
+                _buildOptionCard(
+                  title: 'What format do you want to export?',
+                  subtitle: selectedFormat!,
+                  onTap: _openFormatSelector,
+                ),
+                const Spacer(),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: null, // export functionality later
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Export Data',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOptionCard({
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Color(0xFFF1F1FA)),
+          // border: Border.all(),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              width: 25,
+              height: 25,
+              child: SvgPicture.asset('assets/icons/arrow-down-2.svg'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- Category Selector Modal ---
+  void _openCategorySelector(Box<CategoryModel> categoryBox) async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        final categories = categoryBox.values.toList();
+
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle Bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 400,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Select Categories',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView(
+                        children: [
+                          ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: Color(
+                                  0xFF2CFF05,
+                                ).withValues(alpha: 0.15),
+                              ),
+                              child: SvgPicture.asset(
+                                'assets/icons/add.svg',
+                                colorFilter: ColorFilter.mode(
+                                  Colors.green,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            ),
+                            title: const Text(
+                              'All Categories',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontFamily: 'Inter',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            onTap: () {
+                              setState(
+                                () => selectedCategoriesText = 'All categories',
+                              );
+                              Navigator.pop(context);
+                            },
+                          ),
+                          for (final cat in categories)
+                            ListTile(
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: cat.color.withValues(alpha: 0.15),
+                                ),
+                                child: SvgPicture.asset(
+                                  cat.iconsvg,
+                                  colorFilter: ColorFilter.mode(
+                                    cat.color,
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                cat.name,
+                                style: TextStyle(
+                                  color: cat.color,
+                                  fontFamily: 'Inter',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              onTap: () {
+                                setState(
+                                  () => selectedCategoriesText = cat.name,
+                                );
+                                Navigator.pop(context);
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // --- Date Range Selector Modal ---
+  void _openDateRangeSelector() async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle Bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Select Date Range',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Divider(),
+              const SizedBox(height: 16),
+              _dateOption('Today'),
+              _dateOption('Last week'),
+              _dateOption('Last 30 days'),
+              _dateOption('Last year'),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _dateOption(String label) {
+    return ListTile(
+      title: Text(
+        label,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Color(0xff7F3DFF),
+          fontFamily: 'Inter',
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onTap: () {
+        setState(() => selectedDateRange = label);
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  // --- Format Selector Modal ---
+  void _openFormatSelector() async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle Bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Select Export Format',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Divider(),
+              const SizedBox(height: 16),
+              ListTile(
+                title: const Text('JSON'),
+                onTap: () {
+                  setState(() => selectedFormat = 'JSON');
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

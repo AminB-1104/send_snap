@@ -19,6 +19,7 @@ class HiveService {
     Hive.registerAdapter(CategoryModelAdapter());
     Hive.registerAdapter(ItemsModelAdapter());
 
+
     _expenseBox = await Hive.openBox<ExpenseModel>('expenses');
     _categoryBox = await Hive.openBox<CategoryModel>('categories');
     _itemsBox = await Hive.openBox<ItemsModel>('items');

@@ -490,7 +490,7 @@ class _TransactionsState extends State<Transactions> {
                   borderRadius: BorderRadius.circular(12),
                   child: Image.file(
                     File(expense.imagepath),
-                    height: 150,
+                    height: 400,
                     width: double.infinity,
                     fit: BoxFit.cover,
                   ),

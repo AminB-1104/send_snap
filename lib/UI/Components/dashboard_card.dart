@@ -101,7 +101,7 @@ class DashboardCard extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '\$${income}',
+                              '\$$income',
                               style: const TextStyle(
                                 fontFamily: 'Inter',
                                 color: Colors.white,

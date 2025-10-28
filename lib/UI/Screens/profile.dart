@@ -42,13 +42,15 @@ class ProfilePage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Column(
               children: [
-                // Profile avatar + name + email
+                // Profile avatar
                 CircleAvatar(
                   radius: 48,
                   backgroundColor: purple.withValues(alpha: 0.1),
                   backgroundImage: const AssetImage('assets/images/avatar.png'),
                 ),
                 const SizedBox(height: 12),
+
+                // name
                 const Text(
                   'John Doe',
                   style: TextStyle(
@@ -59,6 +61,8 @@ class ProfilePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
+
+                //email
                 Text(
                   'johndoe@example.com',
                   style: TextStyle(
@@ -70,7 +74,7 @@ class ProfilePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
 
-                // Section: Account Settings
+                // buttons
                 const SizedBox(height: 20),
                 _buildListTile(
                   icon: 'assets/icons/settings.svg',
@@ -84,22 +88,19 @@ class ProfilePage extends StatelessWidget {
                   onTap: () {},
                 ),
 
-                // const SizedBox(height: 32),
-
-                // Section: Support
                 const SizedBox(height: 20),
                 _buildListTile(
                   icon: 'assets/icons/upload.svg',
                   label: 'Export Data',
-                  onTap: () {},
+                  onTap: () {
+                    context.pushNamed('/export');
+                  },
                 ),
                 const SizedBox(height: 20),
                 _buildListTile(
                   icon: 'assets/icons/logout.svg',
                   label: 'Log Out',
-                  onTap: () {
-                    // log out logic
-                  },
+                  onTap: () {},
                 ),
 
                 const SizedBox(height: 40),
@@ -153,7 +154,7 @@ class ProfilePage extends StatelessWidget {
             Container(
               height: 50,
               width: 50,
-              padding: const EdgeInsets.all(13 ),
+              padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
                 color: Color(0xffEEE5FF),
                 borderRadius: BorderRadius.circular(16),

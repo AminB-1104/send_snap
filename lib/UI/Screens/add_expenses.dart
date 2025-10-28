@@ -1,5 +1,4 @@
 // ignore_for_file: use_build_context_synchronously
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -273,7 +272,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
                   ),
                 ),
 
-                // const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -418,7 +416,13 @@ class _AddExpensePageState extends State<AddExpensePage> {
                                     color: Color(0xAA91919F),
                                   ),
                                 ),
-                              SvgPicture.asset('assets/icons/arrow-down-2.svg'),
+                              SvgPicture.asset(
+                                'assets/icons/arrow-down-2.svg',
+                                colorFilter: ColorFilter.mode(
+                                  Color(0xff91919F),
+                                  BlendMode.srcIn,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -441,7 +445,10 @@ class _AddExpensePageState extends State<AddExpensePage> {
                               ? 'Select a date *'
                               : 'Select a date',
                           hintStyle: TextStyle(color: Color(0xAA91919F)),
-                          suffixIcon: Icon(Icons.calendar_month_rounded),
+                          suffixIcon: Icon(
+                            Icons.calendar_month_rounded,
+                            color: Color(0xff91919F),
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,

@@ -26,7 +26,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   CategoryModel? selectedCategory;
   int selectedMonth = DateTime.now().month;
-  String selectedFilter = 'Today'; // default selected chip
+  String selectedFilter = 'Today'; //default filter
 
   void _onMonthChanged(int month) {
     setState(() => selectedMonth = month);
@@ -130,12 +130,12 @@ class _HomePageState extends State<HomePage> {
               animSpeedFactor: 3,
               child: CustomScrollView(
                 slivers: [
-                  // --- DASHBOARD CARD ---
+                  // DASHBOARD CARD 
                   SliverToBoxAdapter(
                     child: DashboardCard(expenses: allExpenses),
                   ),
 
-                  // --- EXPENSE LINE CHART ---
+                  // EXPENSE LINE CHART
                   SliverToBoxAdapter(
                     child: ExpenseLineChart(
                       expenses: allExpenses, // pass ALL expenses
@@ -144,7 +144,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   SliverToBoxAdapter(child: const SizedBox(height: 40)),
 
-                  // --- FILTER SELECTOR (chips) ---
+                  // FILTER SELECTOR (chips)
                   SliverToBoxAdapter(
                     child: SizedBox(
                       height: 60,
@@ -155,7 +155,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
 
-                  // --- RECENT TRANSACTIONS TITLE ---
+                  // RECENT TRANSACTIONS TITLE
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
