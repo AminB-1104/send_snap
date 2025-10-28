@@ -1,6 +1,7 @@
 // lib/UI/Components/appbar.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String? profileImage;
@@ -151,7 +152,9 @@ class _HomeAppBarState extends State<HomeAppBar> {
               width: 34,
               height: 34,
             ),
-            onPressed: () {},
+            onPressed: () {
+              context.pushNamed('/notifList');
+            },
           ),
         ),
       ],

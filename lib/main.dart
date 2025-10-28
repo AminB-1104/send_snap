@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:send_snap/Services/hive_service.dart';
+import 'package:send_snap/Services/notification_service.dart';
 import 'package:send_snap/UI/Screens/add_expenses.dart';
 import 'package:send_snap/UI/Screens/all_transactions.dart';
 import 'package:send_snap/UI/Screens/budget.dart';
 import 'package:send_snap/UI/Screens/export_data.dart';
 import 'package:send_snap/UI/Screens/home_page.dart';
+import 'package:send_snap/UI/Screens/import_data.dart';
+import 'package:send_snap/UI/Screens/notification_list.dart';
+import 'package:send_snap/UI/Screens/notifications_settings.dart';
 import 'package:send_snap/UI/Screens/profile.dart';
 import 'package:send_snap/UI/Screens/splash_screen.dart';
 
@@ -13,6 +17,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await HiveService.init();
+
+  await NotificationService().initialize();
 
   runApp(const MyApp());
 }
@@ -80,6 +86,27 @@ final GoRouter _router = GoRouter(
       path: '/export',
       builder: (BuildContext context, GoRouterState state) {
         return const ExportDataPage();
+      },
+    ),
+    GoRoute(
+      name: '/import',
+      path: '/import',
+      builder: (BuildContext context, GoRouterState state) {
+        return const ImportDataPage();
+      },
+    ),
+    GoRoute(
+      name: '/notifSettings',
+      path: '/notifSettings',
+      builder: (BuildContext context, GoRouterState state) {
+        return const NotificationSettingsPage();
+      },
+    ),
+    GoRoute(
+      name: '/notifList',
+      path: '/notifList',
+      builder: (BuildContext context, GoRouterState state) {
+        return const NotificationListPage();
       },
     ),
   ],

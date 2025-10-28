@@ -81,12 +81,6 @@ class ProfilePage extends StatelessWidget {
                   label: 'Settings',
                   onTap: () {},
                 ),
-                const SizedBox(height: 20),
-                _buildListTile(
-                  icon: 'assets/icons/notification.svg',
-                  label: 'Notifications',
-                  onTap: () {},
-                ),
 
                 const SizedBox(height: 20),
                 _buildListTile(
@@ -94,6 +88,14 @@ class ProfilePage extends StatelessWidget {
                   label: 'Export Data',
                   onTap: () {
                     context.pushNamed('/export');
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildListTile(
+                  icon: 'assets/icons/download.svg',
+                  label: 'Import Data',
+                  onTap: () {
+                    context.pushNamed('/import');
                   },
                 ),
                 const SizedBox(height: 20),

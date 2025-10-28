@@ -72,41 +72,44 @@ class ExpenseLineChart extends StatelessWidget {
 
     return SizedBox(
       height: 180,
-      child: LineChart(
-        LineChartData(
-          lineBarsData: [
-            LineChartBarData(
-              spots: spots,
-              isCurved: true,
-              color: const Color(0xFF7F3DFF),
-              barWidth: 6,
-              dotData: FlDotData(show: false),
-              isStrokeCapRound: true,
-              isStrokeJoinRound: true,
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  colors: [
-                    Color.fromARGB(255, 189, 156, 255),
-                    Color.fromARGB(255, 189, 156, 255),
-                    // Color.fromARGB(159, 213, 192, 255),
-                    Color.fromARGB(11, 255, 255, 255),
-                  ],
-                  begin: AlignmentGeometry.topCenter,
-                  end: AlignmentGeometry.bottomCenter,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5.0),
+        child: LineChart(
+          LineChartData(
+            lineBarsData: [
+              LineChartBarData(
+                spots: spots,
+                isCurved: true,
+                color: const Color(0xFF7F3DFF),
+                barWidth: 6,
+                dotData: FlDotData(show: false),
+                isStrokeCapRound: true,
+                isStrokeJoinRound: true,
+                belowBarData: BarAreaData(
+                  show: true,
+                  gradient: LinearGradient(
+                    colors: [
+                      Color.fromARGB(255, 189, 156, 255),
+                      Color.fromARGB(255, 189, 156, 255),
+                      // Color.fromARGB(159, 213, 192, 255),
+                      Color.fromARGB(11, 255, 255, 255),
+                    ],
+                    begin: AlignmentGeometry.topCenter,
+                    end: AlignmentGeometry.bottomCenter,
+                  ),
+                  // color: const Color(0xFF7F3DFF).withOpacity(0.2),
                 ),
-                // color: const Color(0xFF7F3DFF).withOpacity(0.2),
+                // preventCurveOverShooting: true,
               ),
-              // preventCurveOverShooting: true,
+            ],
+            titlesData: FlTitlesData(
+              show: false,
+              // leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              // bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
-          ],
-          titlesData: FlTitlesData(
-            show: false,
-            // leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            // bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            gridData: FlGridData(show: false),
+            borderData: FlBorderData(show: false),
           ),
-          gridData: FlGridData(show: false),
-          borderData: FlBorderData(show: false),
         ),
       ),
     );

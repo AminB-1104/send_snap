@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hive/hive.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:send_snap/Data/Models/category_model.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:send_snap/Services/hive_service.dart';
 
 class ExportDataPage extends StatefulWidget {
   const ExportDataPage({super.key});
@@ -47,9 +51,9 @@ class _ExportDataPageState extends State<ExportDataPage> {
           appBar: AppBar(
             centerTitle: true,
             backgroundColor: Colors.white,
-            leading: Container(
-              padding: const EdgeInsets.all(12),
-              child: SvgPicture.asset(
+            leading: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: SvgPicture.asset(
                 'assets/icons/arrow-left.svg',
                 colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcIn),
                 width: 32,
@@ -93,9 +97,9 @@ class _ExportDataPageState extends State<ExportDataPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: null, // export functionality later
+                    onPressed: _exportData, // export functionality later
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
+                      backgroundColor: Color(0xff7F3DFF),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -103,7 +107,12 @@ class _ExportDataPageState extends State<ExportDataPage> {
                     ),
                     child: const Text(
                       'Export Data',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -226,7 +235,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
                                 ).withValues(alpha: 0.15),
                               ),
                               child: SvgPicture.asset(
-                                'assets/icons/add.svg',
+                                'assets/icons/all-category.svg',
                                 colorFilter: ColorFilter.mode(
                                   Colors.green,
                                   BlendMode.srcIn,
@@ -408,7 +417,16 @@ class _ExportDataPageState extends State<ExportDataPage> {
               const Divider(),
               const SizedBox(height: 16),
               ListTile(
-                title: const Text('JSON'),
+                title: const Text(
+                  'JSON',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xff7F3DFF),
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 onTap: () {
                   setState(() => selectedFormat = 'JSON');
                   Navigator.pop(context);
@@ -420,5 +438,114 @@ class _ExportDataPageState extends State<ExportDataPage> {
         );
       },
     );
+  }
+
+  Future<void> _exportData() async {
+    try {
+      // Request storage permission
+      final status = await Permission.storage.request();
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Storage permission denied.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Open the expense box
+      final expenseBox = HiveService.expenses;
+      final allExpenses = expenseBox.values.toList();
+
+      // --- Filter by Category ---
+      var filtered = allExpenses.where((expense) {
+        if (selectedCategoriesText == 'All categories') return true;
+        return expense.category == selectedCategoriesText;
+      }).toList();
+
+      // --- Filter by Date Range ---
+      final now = DateTime.now();
+      DateTime fromDate;
+
+      switch (selectedDateRange) {
+        case 'Today':
+          fromDate = DateTime(now.day);
+          break;
+        case 'Last week':
+          fromDate = now.subtract(const Duration(days: 7));
+          break;
+        case 'Last 30 days':
+          fromDate = now.subtract(const Duration(days: 30));
+          break;
+        case 'Last year':
+          fromDate = now.subtract(const Duration(days: 365));
+          break;
+        default:
+          fromDate = DateTime(2000);
+      }
+
+      filtered = filtered.where((e) => e.date.isAfter(fromDate)).toList();
+
+      if (filtered.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No Expenses matches your filters!')),
+        );
+        return;
+      }
+
+      // --- Convert to JSON ---
+      final jsonData = filtered
+          .map(
+            (e) => {
+              'id': e.id,
+              'merchant': e.merchant,
+              'date': e.date.toIso8601String(),
+              'total': e.total,
+              'currency': e.currency,
+              'category': e.category,
+              'note': e.note,
+              'imagepath': e.imagepath,
+              'items': e.items,
+            },
+          )
+          .toList();
+
+      final jsonString = const JsonEncoder.withIndent('  ').convert(jsonData);
+
+      print('Expense count: ${HiveService.expenses.length}');
+      for (var e in HiveService.expenses.values) {
+        print('Expense -> ${e.merchant} | ${e.total}');
+      }
+
+      // --- Save to Downloads Folder ---
+      final downloadsDir = Directory('/storage/emulated/0/Download');
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final filePath = '${downloadsDir.path}/expenses_export_$timestamp.json';
+      final file = File(filePath);
+      await file.writeAsString(jsonString);
+
+      // --- Success Message ---
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Exported to Downloads!\n${filePath.split('/').last}',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
