@@ -13,6 +13,7 @@ class FilterSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filters = ['Today', 'Week', 'Month', 'Year'];
+    final theme = Theme.of(context);
 
     return SizedBox(
       height: 50,
@@ -28,7 +29,7 @@ class FilterSelector extends StatelessWidget {
           return Center(
             child: ChoiceChip(
               label: Text(filter),
-              backgroundColor: Colors.white,
+              backgroundColor: theme.colorScheme.surface,
               selected: isSelected,
               selectedColor: const Color(0xffFCEED4),
               // backgroundColor: Colors.grey[200],

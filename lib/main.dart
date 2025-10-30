@@ -27,7 +27,7 @@ void main() async {
 
   runApp(
     ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
+      create: (_) => ThemeProvider(),
       child: const MyApp(),
     ),
   );
@@ -45,6 +45,7 @@ class MyApp extends StatelessWidget {
       title: 'Send Snap',
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
+      darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
       routerConfig: _router,
     );

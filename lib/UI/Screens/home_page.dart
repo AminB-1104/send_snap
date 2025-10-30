@@ -101,11 +101,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // final themeProvider = Provider.of<ThemeProvider>(context);
     final theme = Theme.of(context);
-    // final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: HomeAppBar(
         profileImage: 'assets/images/avatar.png',
         selectedMonth: selectedMonth,
@@ -124,7 +124,7 @@ class _HomePageState extends State<HomePage> {
                 setState(() {});
               },
               color: theme.colorScheme.primary,
-              backgroundColor: Colors.white,
+              backgroundColor: theme.colorScheme.surface,
               showChildOpacityTransition: false,
               height: 200,
               animSpeedFactor: 3,
@@ -347,6 +347,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showExpenseDetails(BuildContext context, ExpenseModel expense) {
+    final theme = Theme.of(context);
     final category = HiveService.categories.values.firstWhere(
       (c) => c.name == expense.category,
       orElse: () =>
@@ -354,7 +355,7 @@ class _HomePageState extends State<HomePage> {
     );
 
     showModalBottomSheet(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -422,7 +423,10 @@ class _HomePageState extends State<HomePage> {
                     : expense.note.isNotEmpty
                     ? expense.note
                     : expense.category,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: theme.textTheme.bodyMedium!.color,
+                ),
               ),
               const SizedBox(height: 16),
 

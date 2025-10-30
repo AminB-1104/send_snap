@@ -37,6 +37,8 @@ class _ExportDataPageState extends State<ExportDataPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return FutureBuilder<Box<CategoryModel>>(
       future: _categoryBoxFuture,
       builder: (context, snapshot) {
@@ -47,25 +49,28 @@ class _ExportDataPageState extends State<ExportDataPage> {
         }
         final categoryBox = snapshot.data!;
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
             centerTitle: true,
-            backgroundColor: Colors.white,
+            backgroundColor: theme.appBarTheme.backgroundColor,
             leading: IconButton(
               onPressed: () => Navigator.pop(context),
               icon: SvgPicture.asset(
                 'assets/icons/arrow-left.svg',
-                colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(
+                  theme.iconTheme.color!,
+                  BlendMode.srcIn,
+                ),
                 width: 32,
                 height: 32,
               ),
             ),
-            title: const Text(
+            title: Text(
               'Export Data',
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 18,
-                color: Colors.black,
+                color: theme.textTheme.titleLarge!.color,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -129,6 +134,8 @@ class _ExportDataPageState extends State<ExportDataPage> {
     required String subtitle,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -136,10 +143,8 @@ class _ExportDataPageState extends State<ExportDataPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
 
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Color(0xFFF1F1FA)),
-          // border: Border.all(),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -150,15 +155,20 @@ class _ExportDataPageState extends State<ExportDataPage> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
+                      color: theme.textTheme.bodyLarge!.color,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(
+                      color: theme.textTheme.bodyMedium!.color,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -166,7 +176,13 @@ class _ExportDataPageState extends State<ExportDataPage> {
             SizedBox(
               width: 25,
               height: 25,
-              child: SvgPicture.asset('assets/icons/arrow-down-2.svg'),
+              child: SvgPicture.asset(
+                'assets/icons/arrow-down-2.svg',
+                colorFilter: ColorFilter.mode(
+                  theme.iconTheme.color!,
+                  BlendMode.srcIn,
+                ),
+              ),
             ),
           ],
         ),
@@ -176,9 +192,11 @@ class _ExportDataPageState extends State<ExportDataPage> {
 
   // --- Category Selector Modal ---
   void _openCategorySelector(Box<CategoryModel> categoryBox) async {
+    final theme = Theme.of(context);
+
     await showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -210,11 +228,13 @@ class _ExportDataPageState extends State<ExportDataPage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Select Categories',
                       style: TextStyle(
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
+                        color: theme.textTheme.bodyLarge!.color,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -307,9 +327,11 @@ class _ExportDataPageState extends State<ExportDataPage> {
 
   // --- Date Range Selector Modal ---
   void _openDateRangeSelector() async {
+    final theme = Theme.of(context);
+
     await showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -334,12 +356,13 @@ class _ExportDataPageState extends State<ExportDataPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Select Date Range',
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
+                  color: theme.textTheme.bodyLarge!.color,
                 ),
               ),
               const SizedBox(height: 10),
@@ -378,9 +401,11 @@ class _ExportDataPageState extends State<ExportDataPage> {
 
   // --- Format Selector Modal ---
   void _openFormatSelector() async {
+    final theme = Theme.of(context);
+
     await showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -405,12 +430,13 @@ class _ExportDataPageState extends State<ExportDataPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Select Export Format',
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
+                  color: theme.textTheme.bodyLarge!.color,
                 ),
               ),
               const SizedBox(height: 10),

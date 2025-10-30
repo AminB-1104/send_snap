@@ -33,6 +33,7 @@ class _MonthDropdownState extends State<MonthDropdown> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return DropdownButtonHideUnderline(
       child: DropdownButton<int>(
         value: widget.selectedMonth,
@@ -40,14 +41,18 @@ class _MonthDropdownState extends State<MonthDropdown> {
           final m = i + 1;
           return DropdownMenuItem(
             value: m,
-            child: Text(
-              months[i],
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: m == widget.selectedMonth
-                    ? const Color(0xFF7F3DFF)
-                    : Colors.black,
+            child: Container(
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Text(
+                months[i],
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: m == widget.selectedMonth
+                      ? const Color(0xFF7F3DFF)
+                      : theme.textTheme.titleLarge!.color,
+                ),
               ),
             ),
           );
@@ -65,8 +70,8 @@ class _MonthDropdownState extends State<MonthDropdown> {
             children: [
               SvgPicture.asset(
                 'assets/icons/arrow-down-2.svg',
-                width: 20,
-                height: 20,
+                width: 25,
+                height: 25,
                 colorFilter: const ColorFilter.mode(
                   Color(0xFF7F3DFF),
                   BlendMode.srcIn,
@@ -75,8 +80,8 @@ class _MonthDropdownState extends State<MonthDropdown> {
               const SizedBox(width: 3),
               Text(
                 months[i],
-                style: const TextStyle(
-                  color: Colors.black,
+                style: TextStyle(
+                  color: theme.textTheme.titleLarge!.color,
                   fontSize: 15,
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w500,
@@ -85,8 +90,9 @@ class _MonthDropdownState extends State<MonthDropdown> {
             ],
           );
         }),
-        dropdownColor: Colors.white,
+        dropdownColor: theme.colorScheme.surface,
         isDense: true,
+        borderRadius: BorderRadius.circular(16),
         alignment: Alignment.center,
       ),
     );

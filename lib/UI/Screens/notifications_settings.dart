@@ -47,13 +47,23 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Notification Settings'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: Text(
+          'Notification Settings',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: theme.textTheme.titleLarge!.color,
+          ),
+        ),
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -68,7 +78,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
               subtitle: const Text('Remind me to log my expenses daily'),
               value: _isEnabled,
               onChanged: _toggleNotifications,
-              activeColor: const Color(0xFF7F3DFF),
+              activeThumbColor: const Color(0xFF7F3DFF),
             ),
             const SizedBox(height: 20),
             ListTile(

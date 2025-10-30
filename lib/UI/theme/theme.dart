@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 const primaryColor = Color(0xFF7F3DFF);
+const secondaryColor = Color.fromARGB(255, 197, 197, 197);
+const surfaceColor = Color(0xFF181818);
 
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
@@ -8,7 +10,7 @@ final ThemeData lightTheme = ThemeData(
   primaryColor: primaryColor,
   colorScheme: const ColorScheme.light(
     primary: primaryColor,
-    secondary: primaryColor,
+    secondary: secondaryColor,
     surface: Colors.white,
   ),
   appBarTheme: const AppBarTheme(
@@ -16,7 +18,7 @@ final ThemeData lightTheme = ThemeData(
     foregroundColor: Colors.black,
     elevation: 0,
   ),
-  iconTheme: const IconThemeData(color: Colors.black87),
+  iconTheme: const IconThemeData(color: Colors.black),
   textTheme: const TextTheme(
     bodyLarge: TextStyle(color: Colors.black),
     bodyMedium: TextStyle(color: Colors.black87),
@@ -41,15 +43,15 @@ final ThemeData darkTheme = ThemeData(
   primaryColor: primaryColor,
   colorScheme: const ColorScheme.dark(
     primary: primaryColor,
-    secondary: primaryColor,
-    surface: Color(0xFF181818),
+    secondary: secondaryColor,
+    surface: surfaceColor,
   ),
   appBarTheme: const AppBarTheme(
     backgroundColor: Color(0xFF181818),
     foregroundColor: Colors.white,
     elevation: 0,
   ),
-  iconTheme: const IconThemeData(color: Colors.white70),
+  iconTheme: const IconThemeData(color: Colors.white),
   textTheme: const TextTheme(
     bodyLarge: TextStyle(color: Colors.white),
     bodyMedium: TextStyle(color: Colors.white70),

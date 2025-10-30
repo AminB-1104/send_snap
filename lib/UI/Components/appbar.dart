@@ -40,18 +40,22 @@ class _HomeAppBarState extends State<HomeAppBar> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final purple = const Color(0xFF7F3DFF);
 
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.appBarTheme.backgroundColor,
       elevation: 0,
       centerTitle: true,
+      surfaceTintColor: theme.appBarTheme.backgroundColor,
       automaticallyImplyLeading: false,
       titleSpacing: 0,
       leading: Padding(
         padding: const EdgeInsets.only(left: 16),
         child: GestureDetector(
-          onTap: () {},
+          onTap: () {
+            context.pushNamed('/profile');
+          },
           child: CircleAvatar(
             radius: 20,
             backgroundColor: Colors.grey.shade300,
@@ -88,7 +92,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                     fontWeight: FontWeight.w600,
                     color: m == widget.selectedMonth
                         ? const Color(0xFF7F3DFF)
-                        : Colors.black,
+                        : theme.textTheme.titleLarge!.color,
                   ),
                 ),
               ),
@@ -121,8 +125,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                 const SizedBox(width: 3),
                 Text(
                   months[i],
-                  style: const TextStyle(
-                    color: Colors.black,
+                  style: TextStyle(
+                    color: theme.textTheme.titleLarge!.color,
                     fontSize: 15,
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.w500,
@@ -132,7 +136,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
             );
           }),
 
-          dropdownColor: Colors.white,
+          dropdownColor: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
           isDense: true,
           alignment: Alignment.center,
         ),

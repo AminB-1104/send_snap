@@ -10,28 +10,30 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = const Color(0xFF7F3DFF);
-    final greyText = Colors.grey[600];
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/icons/arrow-left.svg',
-            colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              theme.iconTheme.color!,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           "Profile",
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: theme.textTheme.titleLarge!.color,
           ),
         ),
         centerTitle: true,
@@ -45,19 +47,21 @@ class ProfilePage extends StatelessWidget {
                 // Profile avatar
                 CircleAvatar(
                   radius: 48,
-                  backgroundColor: purple.withValues(alpha: 0.1),
+                  backgroundColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.1,
+                  ),
                   backgroundImage: const AssetImage('assets/images/avatar.png'),
                 ),
                 const SizedBox(height: 12),
 
                 // name
-                const Text(
+                Text(
                   'John Doe',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    color: theme.textTheme.bodyLarge!.color,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -69,7 +73,7 @@ class ProfilePage extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: greyText,
+                    color: theme.textTheme.bodyMedium!.color,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -77,6 +81,7 @@ class ProfilePage extends StatelessWidget {
                 // buttons
                 const SizedBox(height: 20),
                 _buildListTile(
+                  context: context,
                   icon: 'assets/icons/settings.svg',
                   label: 'Settings',
                   onTap: () {
@@ -86,6 +91,7 @@ class ProfilePage extends StatelessWidget {
 
                 const SizedBox(height: 20),
                 _buildListTile(
+                  context: context,
                   icon: 'assets/icons/upload.svg',
                   label: 'Export Data',
                   onTap: () {
@@ -94,19 +100,20 @@ class ProfilePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 _buildListTile(
+                  context: context,
                   icon: 'assets/icons/download.svg',
                   label: 'Import Data',
                   onTap: () {
                     context.pushNamed('/import');
                   },
                 ),
-                const SizedBox(height: 20),
-                _buildListTile(
-                  icon: 'assets/icons/logout.svg',
-                  label: 'Log Out',
-                  onTap: () {},
-                ),
 
+                // const SizedBox(height: 20),
+                // _buildListTile(
+                //   icon: 'assets/icons/logout.svg',
+                //   label: 'Log Out',
+                //   onTap: () {},
+                // ),
                 const SizedBox(height: 40),
               ],
             ),
@@ -118,7 +125,7 @@ class ProfilePage extends StatelessWidget {
         width: 60,
         height: 60,
         child: FloatingActionButton(
-          backgroundColor: const Color(0xFF7F3DFF),
+          backgroundColor: theme.colorScheme.primary,
           elevation: 0,
           shape: const CircleBorder(),
           onPressed: () {
@@ -140,10 +147,12 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildListTile({
+    required BuildContext context,
     required String icon,
     required String label,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -151,24 +160,24 @@ class ProfilePage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: Colors.white,
+          color: theme.colorScheme.surface,
         ),
         child: Row(
           children: [
             Container(
               height: 50,
               width: 50,
-              padding: const EdgeInsets.all(13),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Color(0xffEEE5FF),
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: SvgPicture.asset(
                 icon,
                 width: 24,
                 height: 24,
-                colorFilter: const ColorFilter.mode(
-                  Color(0xFF7F3DFF),
+                colorFilter: ColorFilter.mode(
+                  theme.colorScheme.primary,
                   BlendMode.srcIn,
                 ),
               ),
@@ -177,11 +186,11 @@ class ProfilePage extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black,
+                  color: theme.textTheme.bodyLarge!.color,
                 ),
               ),
             ),

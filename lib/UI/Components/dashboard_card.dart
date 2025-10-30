@@ -11,7 +11,7 @@ class DashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final theme = Theme.of(context);
+    final theme = Theme.of(context);
     final total = expenses.fold<num>(
       0,
       (previousValue, element) => previousValue + element.total,
@@ -20,7 +20,7 @@ class DashboardCard extends StatelessWidget {
     return Container(
       // margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Padding(
@@ -32,7 +32,7 @@ class DashboardCard extends StatelessWidget {
               "Account Balance",
               style: TextStyle(
                 fontFamily: 'Inter',
-                color: Colors.grey[500],
+                color: theme.textTheme.bodyMedium!.color,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -41,9 +41,9 @@ class DashboardCard extends StatelessWidget {
             Text(
               "\$${income - total}",
               // "\$${total.toStringAsFixed(2)}",
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
-                color: Colors.black,
+                color: theme.textTheme.bodyLarge!.color,
                 fontSize: 40,
                 fontWeight: FontWeight.w500,
               ),

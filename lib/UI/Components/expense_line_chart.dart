@@ -85,20 +85,20 @@ class ExpenseLineChart extends StatelessWidget {
                 dotData: FlDotData(show: false),
                 isStrokeCapRound: true,
                 isStrokeJoinRound: true,
-                belowBarData: BarAreaData(
-                  show: true,
-                  gradient: LinearGradient(
-                    colors: [
-                      Color.fromARGB(255, 189, 156, 255),
-                      Color.fromARGB(255, 189, 156, 255),
-                      // Color.fromARGB(159, 213, 192, 255),
-                      Color.fromARGB(11, 255, 255, 255),
-                    ],
-                    begin: AlignmentGeometry.topCenter,
-                    end: AlignmentGeometry.bottomCenter,
-                  ),
-                  // color: const Color(0xFF7F3DFF).withOpacity(0.2),
-                ),
+                // belowBarData: BarAreaData(
+                //   show: true,
+                //   gradient: LinearGradient(
+                //     colors: [
+                //       Color.fromARGB(255, 189, 156, 255),
+                //       Color.fromARGB(183, 189, 156, 255),
+                //       // Color.fromARGB(159, 213, 192, 255),
+                //       Color.fromARGB(0, 255, 255, 255),
+                //     ],
+                //     begin: AlignmentGeometry.topCenter,
+                //     end: AlignmentGeometry.bottomCenter,
+                //   ),
+                //   // color: const Color(0xFF7F3DFF).withOpacity(0.2),
+                // ),
                 // preventCurveOverShooting: true,
               ),
             ],

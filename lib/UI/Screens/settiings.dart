@@ -7,27 +7,33 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/icons/arrow-left.svg',
             width: 32,
             height: 32,
+            colorFilter: ColorFilter.mode(
+              theme.iconTheme.color!,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Settings',
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: theme.textTheme.titleLarge!.color,
           ),
         ),
       ),
@@ -46,22 +52,23 @@ class SettingsPage extends StatelessWidget {
   }
 
   Widget _buildSettingTile(BuildContext context, String title, String path) {
+    final theme = Theme.of(context);
     return ListTile(
       contentPadding: EdgeInsets.symmetric(vertical: 10),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 16,
-          color: Colors.black,
+          color: theme.textTheme.bodyLarge!.color,
         ),
       ),
       trailing: SvgPicture.asset(
         'assets/icons/arrow-right-2.svg',
         width: 25,
         height: 25,
-        colorFilter: const ColorFilter.mode(
-          Color(0xFF7B61FF), // purple accent
+        colorFilter: ColorFilter.mode(
+          theme.colorScheme.primary, // purple accent
           BlendMode.srcIn,
         ),
       ),

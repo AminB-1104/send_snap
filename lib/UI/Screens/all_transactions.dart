@@ -25,12 +25,13 @@ class _TransactionsState extends State<Transactions> {
   int selectedMonth = DateTime.now().month;
 
   void _openFilterModal() {
+    final theme = Theme.of(context);
     String? selectedCategory;
     String? selectedSort;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -214,19 +215,24 @@ class _TransactionsState extends State<Transactions> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        surfaceTintColor: theme.appBarTheme.backgroundColor,
         leading: IconButton(
           onPressed: () {
             context.pushNamed('/home');
           },
-          icon: SvgPicture.asset('assets/icons/arrow-left.svg'),
+          icon: SvgPicture.asset(
+            'assets/icons/arrow-left.svg',
+            colorFilter: ColorFilter.mode(
+              theme.iconTheme.color!,
+              BlendMode.srcIn,
+            ),
+          ),
         ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -246,7 +252,10 @@ class _TransactionsState extends State<Transactions> {
           IconButton(
             icon: SvgPicture.asset(
               'assets/icons/sort.svg',
-              colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcIn),
+              colorFilter: ColorFilter.mode(
+                theme.iconTheme.color!,
+                BlendMode.srcIn,
+              ),
             ),
             onPressed: _openFilterModal,
           ),
@@ -273,7 +282,7 @@ class _TransactionsState extends State<Transactions> {
               setState(() {});
             },
             color: Color(0xFF7F3DFF),
-            backgroundColor: Colors.white,
+            backgroundColor: theme.colorScheme.surface,
             showChildOpacityTransition: false,
             height: 200,
             animSpeedFactor: 3,
@@ -300,7 +309,7 @@ class _TransactionsState extends State<Transactions> {
                   ),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: ListTile(
@@ -382,7 +391,7 @@ class _TransactionsState extends State<Transactions> {
         width: 60,
         height: 60,
         child: FloatingActionButton(
-          backgroundColor: const Color(0xFF7F3DFF),
+          backgroundColor: theme.colorScheme.primary,
           elevation: 0,
           shape: const CircleBorder(),
           onPressed: () {
@@ -404,6 +413,7 @@ class _TransactionsState extends State<Transactions> {
   }
 
   void _showExpenseDetails(BuildContext context, ExpenseModel expense) {
+    final theme = Theme.of(context);
     final category = HiveService.categories.values.firstWhere(
       (c) => c.name == expense.category,
       orElse: () =>
@@ -411,7 +421,7 @@ class _TransactionsState extends State<Transactions> {
     );
 
     showModalBottomSheet(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -479,7 +489,10 @@ class _TransactionsState extends State<Transactions> {
                     : expense.note.isNotEmpty
                     ? expense.note
                     : expense.category,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: theme.textTheme.bodyMedium!.color,
+                ),
               ),
               const SizedBox(height: 16),
 

@@ -21,26 +21,31 @@ class _ImportDataPageState extends State<ImportDataPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: SvgPicture.asset(
             'assets/icons/arrow-left.svg',
-            colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              theme.iconTheme.color!,
+              BlendMode.srcIn,
+            ),
             width: 32,
             height: 32,
           ),
         ),
-        title: const Text(
+        title: Text(
           'Import Data',
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 18,
-            color: Colors.black,
+            color: theme.textTheme.titleLarge!.color,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -68,7 +73,7 @@ class _ImportDataPageState extends State<ImportDataPage> {
               child: ElevatedButton(
                 onPressed: _selectedFilePath == null ? null : _importData,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff7F3DFF),
+                  backgroundColor: theme.colorScheme.primary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -109,15 +114,16 @@ class _ImportDataPageState extends State<ImportDataPage> {
     required String subtitle,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFF1F1FA)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -128,15 +134,22 @@ class _ImportDataPageState extends State<ImportDataPage> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
+                      color: theme.textTheme.bodyLarge!.color,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w500,
+                      color: theme.textTheme.bodyMedium!.color,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -144,7 +157,13 @@ class _ImportDataPageState extends State<ImportDataPage> {
             SizedBox(
               width: 25,
               height: 25,
-              child: SvgPicture.asset('assets/icons/arrow-down-2.svg'),
+              child: SvgPicture.asset(
+                'assets/icons/arrow-down-2.svg',
+                colorFilter: ColorFilter.mode(
+                  theme.iconTheme.color!,
+                  BlendMode.srcIn,
+                ),
+              ),
             ),
           ],
         ),

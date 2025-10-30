@@ -345,7 +345,6 @@ class _CreateBudgetPageState extends State<CreateBudgetPage> {
   final _budgetNameController = TextEditingController();
   final _amountController = TextEditingController();
   final _currencyController = TextEditingController(text: 'USD');
-  final _categoryController = TextEditingController();
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -355,63 +354,19 @@ class _CreateBudgetPageState extends State<CreateBudgetPage> {
     _budgetNameController.dispose();
     _amountController.dispose();
     _currencyController.dispose();
-    _categoryController.dispose();
     _startDateController.dispose();
     _endDateController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
 
-  void _showCategoryPicker() async {
-    final categories = ['Food', 'Transport', 'Shopping', 'Subscription'];
-
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              height: 5,
-              width: 40,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            const Text(
-              'Select Category',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ...categories.map((cat) {
-              return ListTile(
-                title: Text(cat, style: const TextStyle(fontSize: 16)),
-                onTap: () => Navigator.pop(context, cat),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-
-    if (selected != null) {
-      setState(() => _categoryController.text = selected);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final purple = const Color(0xFF7F3DFF);
+    final theme = Theme.of(context);
+    // final purple = const Color(0xFF7F3DFF);
 
     return Scaffold(
-      backgroundColor: purple,
+      backgroundColor: theme.colorScheme.primary,
       body: SafeArea(
         child: Column(
           children: [
@@ -426,13 +381,13 @@ class _CreateBudgetPageState extends State<CreateBudgetPage> {
                     borderRadius: BorderRadius.circular(12),
                     child: SvgPicture.asset(
                       'assets/icons/arrow-left.svg',
-                      colorFilter: const ColorFilter.mode(
+                      colorFilter: ColorFilter.mode(
                         Colors.white,
                         BlendMode.srcIn,
                       ),
                     ),
                   ),
-                  const Text(
+                  Text(
                     "Create Budget",
                     style: TextStyle(
                       color: Colors.white,
@@ -502,8 +457,8 @@ class _CreateBudgetPageState extends State<CreateBudgetPage> {
                   horizontal: 20,
                   vertical: 24,
                 ),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 child: SingleChildScrollView(
@@ -513,18 +468,6 @@ class _CreateBudgetPageState extends State<CreateBudgetPage> {
                       TextFormField(
                         controller: _budgetNameController,
                         decoration: _inputDecoration('Budget Name'),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Category
-                      GestureDetector(
-                        onTap: _showCategoryPicker,
-                        child: AbsorbPointer(
-                          child: TextFormField(
-                            controller: _categoryController,
-                            decoration: _inputDecoration('Select Category'),
-                          ),
-                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -591,7 +534,7 @@ class _CreateBudgetPageState extends State<CreateBudgetPage> {
 
       // --- Bottom Button ---
       bottomNavigationBar: Container(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: SizedBox(
@@ -607,7 +550,7 @@ class _CreateBudgetPageState extends State<CreateBudgetPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                backgroundColor: purple,
+                backgroundColor: theme.colorScheme.primary,
               ),
               child: const Text(
                 "Create Budget",
@@ -626,14 +569,16 @@ class _CreateBudgetPageState extends State<CreateBudgetPage> {
   }
 
   InputDecoration _inputDecoration(String hint) {
+    final theme = Theme.of(context);
+
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xAA91919F)),
+      hintStyle: TextStyle(color: theme.textTheme.bodyMedium!.color),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide.none,
       ),
-      fillColor: Colors.grey.shade100,
+      fillColor: theme.colorScheme.surface,
       filled: true,
     );
   }
@@ -643,18 +588,20 @@ class _CreateBudgetPageState extends State<CreateBudgetPage> {
     IconData icon,
     VoidCallback onTap,
   ) {
+    final theme = Theme.of(context);
+
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xAA91919F)),
+      hintStyle: TextStyle(color: theme.textTheme.bodyMedium!.color),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide.none,
       ),
-      fillColor: Colors.grey.shade100,
+      fillColor: theme.colorScheme.surface,
       filled: true,
       suffixIcon: GestureDetector(
         onTap: onTap,
-        child: Icon(icon, color: const Color(0xFF91919F)),
+        child: Icon(icon, color: theme.iconTheme.color),
       ),
     );
   }

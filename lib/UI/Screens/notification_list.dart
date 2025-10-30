@@ -9,26 +9,33 @@ class NotificationListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notificationService = NotificationService();
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: SvgPicture.asset('assets/icons/arrow-left.svg'),
+          icon: SvgPicture.asset(
+            'assets/icons/arrow-left.svg',
+            colorFilter: ColorFilter.mode(
+              theme.iconTheme.color!,
+              BlendMode.srcIn,
+            ),
+          ),
         ),
-        title: const Text(
+        title: Text(
           'Notifications',
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: theme.textTheme.titleLarge!.color,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         centerTitle: true,
         actions: [
@@ -36,18 +43,29 @@ class NotificationListPage extends StatelessWidget {
             onPressed: () {
               context.pushNamed('/notifSettings');
             },
-            icon: SvgPicture.asset('assets/icons/settings.svg'),
+            icon: SvgPicture.asset(
+              'assets/icons/settings.svg',
+              colorFilter: ColorFilter.mode(
+                theme.iconTheme.color!,
+                BlendMode.srcIn,
+              ),
+            ),
           ),
         ],
       ),
       body: ValueListenableBuilder<List<String>>(
         valueListenable: notificationService.notifications,
         builder: (context, notifications, _) {
+          final theme = Theme.of(context);
+
           if (notifications.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
                 "No notifications yet.",
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: theme.textTheme.bodyMedium!.color,
+                ),
               ),
             );
           }
@@ -55,21 +73,29 @@ class NotificationListPage extends StatelessWidget {
           return ListView.builder(
             itemCount: notifications.length,
             itemBuilder: (context, index) {
+              final theme = Theme.of(context);
               return Card(
+                elevation: 0,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: const Color(0xFFF5F1FF),
+                color: theme.colorScheme.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     Icons.notifications_active_rounded,
-                    color: Color(0xFF7F3DFF),
+                    color: theme.colorScheme.primary,
                   ),
-                  title: Text(notifications[index]),
+                  title: Text(
+                    notifications[index],
+                    style: TextStyle(color: theme.textTheme.bodyLarge!.color),
+                  ),
                   subtitle: Text(
                     "Just now",
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                    style: TextStyle(
+                      color: theme.textTheme.bodyMedium!.color,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               );

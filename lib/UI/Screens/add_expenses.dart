@@ -202,6 +202,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
     final categoriesBox = HiveService.categories;
     final categories = categoriesBox.values.toList();
     final red = const Color(0xFFFD3C4A);
+    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: red,
@@ -326,8 +327,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                   horizontal: 20,
                   vertical: 24,
                 ),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 child: SingleChildScrollView(
@@ -340,7 +341,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           fontFamily: 'Inter',
                           fontSize: 17,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
+                          color: theme.textTheme.bodyMedium!.color,
                         ),
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
@@ -360,7 +361,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           final selected =
                               await showModalBottomSheet<CategoryModel>(
                                 context: context,
-                                backgroundColor: Colors.white,
+                                backgroundColor: theme.colorScheme.surface,
                                 shape: const RoundedRectangleBorder(
                                   side: BorderSide.none,
                                   borderRadius: BorderRadius.vertical(
@@ -438,7 +439,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           fontFamily: 'Inter',
                           fontSize: 17,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
+                          color: theme.textTheme.bodyMedium!.color,
                         ),
                         decoration: InputDecoration(
                           hintText: _dateEmpty
@@ -481,7 +482,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           fontFamily: 'Inter',
                           fontSize: 17,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
+                          color: theme.textTheme.bodyMedium!.color,
                         ),
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
@@ -507,7 +508,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
-                          color: Colors.black87,
+                          color: theme.textTheme.bodyMedium!.color,
                         ),
                       ),
 
@@ -528,7 +529,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                                     style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 16,
-                                      color: Colors.black87,
+                                      color: theme.textTheme.bodyMedium!.color,
                                     ),
                                     decoration: InputDecoration(
                                       hintText: 'Item name',
@@ -536,7 +537,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                                         borderRadius: BorderRadius.circular(10),
                                         borderSide: BorderSide.none,
                                       ),
-                                      fillColor: Colors.grey.shade100,
+                                      fillColor: theme.colorScheme.surface,
                                       filled: true,
                                     ),
                                   ),
@@ -579,10 +580,10 @@ class _AddExpensePageState extends State<AddExpensePage> {
                         height: 60,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
-                          color: Colors.grey.shade100,
+                          color: theme.colorScheme.surface,
                         ),
                         child: Material(
-                          color: Colors.white,
+                          color: theme.colorScheme.surface,
                           child: InkWell(
                             onTap: () {
                               _showAttachmentModal(context);
@@ -673,7 +674,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
       ),
 
       bottomNavigationBar: Container(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: SizedBox(
@@ -707,12 +708,13 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
   // ATTACHMENT POP-UP MODAL
   void _showAttachmentModal(BuildContext context) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       builder: (context) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
@@ -725,7 +727,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: Color(0xAAD3BDFF),
+                  color: Colors.grey[400],
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -740,7 +742,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                       _pickImage(ImageSource.camera);
                     },
                     child: Card(
-                      color: Color(0xAAEEE5FF),
+                      color: theme.colorScheme.surface,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadiusGeometry.circular(15),
@@ -783,7 +785,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                       _pickImage(ImageSource.gallery);
                     },
                     child: Card(
-                      color: Color(0xAAEEE5FF),
+                      color: theme.colorScheme.surface,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadiusGeometry.circular(15),
@@ -839,6 +841,7 @@ class _CategoryPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -849,13 +852,17 @@ class _CategoryPicker extends StatelessWidget {
             width: 40,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: Colors.grey[400],
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          const Text(
+          Text(
             'Select Category',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge!.color,
+            ),
           ),
           const SizedBox(height: 60),
           Flexible(
