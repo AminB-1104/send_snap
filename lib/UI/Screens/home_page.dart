@@ -102,10 +102,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    // final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       appBar: HomeAppBar(
         profileImage: 'assets/images/avatar.png',
         selectedMonth: selectedMonth,
@@ -123,14 +123,14 @@ class _HomePageState extends State<HomePage> {
                 await Future.delayed(const Duration(milliseconds: 800));
                 setState(() {});
               },
-              color: Color(0xFF7F3DFF),
+              color: theme.colorScheme.primary,
               backgroundColor: Colors.white,
               showChildOpacityTransition: false,
               height: 200,
               animSpeedFactor: 3,
               child: CustomScrollView(
                 slivers: [
-                  // DASHBOARD CARD 
+                  // DASHBOARD CARD
                   SliverToBoxAdapter(
                     child: DashboardCard(expenses: allExpenses),
                   ),
@@ -170,7 +170,7 @@ class _HomePageState extends State<HomePage> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : Colors.black87,
+                              color: theme.textTheme.bodyLarge!.color,
                             ),
                           ),
                           TextButton(
@@ -191,10 +191,10 @@ class _HomePageState extends State<HomePage> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                             ),
-                            child: const Text(
+                            child: Text(
                               "See all",
                               style: TextStyle(
-                                color: Color(0xFF7F3DFF),
+                                color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 16,
                               ),
@@ -240,9 +240,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0xFF2A2A2A)
-                                      : Colors.white,
+                                  color: theme.colorScheme.surface,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: ListTile(
@@ -277,8 +275,9 @@ class _HomePageState extends State<HomePage> {
                                                   ? expense.category[0]
                                                         .toUpperCase()
                                                   : "?",
-                                              style: const TextStyle(
-                                                color: Color(0xFF7F3DFF),
+                                              style: TextStyle(
+                                                color:
+                                                    theme.colorScheme.primary,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -326,7 +325,7 @@ class _HomePageState extends State<HomePage> {
         width: 60,
         height: 60,
         child: FloatingActionButton(
-          backgroundColor: const Color(0xFF7F3DFF),
+          backgroundColor: theme.colorScheme.primary,
           elevation: 0,
           shape: const CircleBorder(),
           onPressed: () {

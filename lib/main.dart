@@ -11,7 +11,12 @@ import 'package:send_snap/UI/Screens/import_data.dart';
 import 'package:send_snap/UI/Screens/notification_list.dart';
 import 'package:send_snap/UI/Screens/notifications_settings.dart';
 import 'package:send_snap/UI/Screens/profile.dart';
+import 'package:send_snap/UI/Screens/settiings.dart';
 import 'package:send_snap/UI/Screens/splash_screen.dart';
+import 'package:send_snap/UI/Screens/theme_settings.dart';
+import 'package:send_snap/UI/theme/theme.dart';
+import 'package:send_snap/UI/theme/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +25,12 @@ void main() async {
 
   await NotificationService().initialize();
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -29,16 +39,19 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp.router(
       title: 'Send Snap',
       debugShowCheckedModeBanner: false,
+      theme: lightTheme,
+      themeMode: themeProvider.themeMode,
       routerConfig: _router,
     );
   }
 }
 
 final GoRouter _router = GoRouter(
-  // initialLocation: '/home',
   routes: <RouteBase>[
     GoRoute(
       path: '/',
@@ -107,6 +120,20 @@ final GoRouter _router = GoRouter(
       path: '/notifList',
       builder: (BuildContext context, GoRouterState state) {
         return const NotificationListPage();
+      },
+    ),
+    GoRoute(
+      name: '/settings',
+      path: '/settings',
+      builder: (BuildContext context, GoRouterState state) {
+        return const SettingsPage();
+      },
+    ),
+    GoRoute(
+      name: '/themeSettings',
+      path: '/themeSettings',
+      builder: (BuildContext context, GoRouterState state) {
+        return const ThemeSettingsPage();
       },
     ),
   ],

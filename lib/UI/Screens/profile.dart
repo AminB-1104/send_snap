@@ -79,7 +79,9 @@ class ProfilePage extends StatelessWidget {
                 _buildListTile(
                   icon: 'assets/icons/settings.svg',
                   label: 'Settings',
-                  onTap: () {},
+                  onTap: () {
+                    context.pushNamed('/settings');
+                  },
                 ),
 
                 const SizedBox(height: 20),

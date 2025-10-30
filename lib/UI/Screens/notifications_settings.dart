@@ -21,8 +21,10 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   }
 
   Future<void> _pickTime() async {
-    final TimeOfDay? picked =
-        await showTimePicker(context: context, initialTime: _selectedTime);
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+    );
 
     if (picked != null) {
       setState(() => _selectedTime = picked);
@@ -46,6 +48,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Notification Settings'),
         backgroundColor: Colors.white,
@@ -69,8 +72,10 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
             ),
             const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.schedule_rounded,
-                  color: Color(0xFF7F3DFF)),
+              leading: const Icon(
+                Icons.schedule_rounded,
+                color: Color(0xFF7F3DFF),
+              ),
               title: const Text('Reminder Time'),
               subtitle: Text(_selectedTime.format(context)),
               trailing: const Icon(Icons.edit_rounded),
@@ -81,17 +86,21 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
               child: ElevatedButton.icon(
                 onPressed: () async {
                   await _notificationService.showInstantNotification(
-                      "Test reminder — you’re doing great!");
+                    "Test reminder — you’re doing great!",
+                  );
                 },
                 icon: const Icon(Icons.notifications_active_outlined),
                 label: const Text('Send Test Notification'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF7F3DFF),
                   foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
