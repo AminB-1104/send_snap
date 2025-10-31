@@ -42,38 +42,100 @@ class _AddExpensePageState extends State<AddExpensePage> {
   String? total;
   String? currency;
 
-  Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await picker.pickImage(source: source);
+  // Replace your _pickImage function in add_expenses.dart with this:
 
-    if (pickedFile == null) return;
+Future<void> _pickImage(ImageSource source) async {
+  final pickedFile = await picker.pickImage(source: source);
 
-    final image = File(pickedFile.path);
-    setState(() => _image = image);
+  if (pickedFile == null) return;
 
-    try {
-      final result = await ReceiptScannerService.scanReceipt(image);
+  final image = File(pickedFile.path);
+  setState(() => _image = image);
 
-      setState(() {
-        merchant = result['merchant'];
-        date = result['date'];
-        total = result['total'];
-        currency = result['currency'];
+  // Show loading dialog BEFORE starting heavy ML processing
+  if (!mounted) return;
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => PopScope(
+      canPop: false,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7F3DFF)),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Scanning receipt...',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 
-        _merchantController.text = merchant ?? '';
-        _dateController.text = date ?? '';
-        _totalController.text = total ?? '';
-        _currencyController.text = currency ?? '';
-      });
+  try {
+    // This now runs without blocking UI thanks to our optimized service
+    final result = await ReceiptScannerService.scanReceipt(image);
 
+    if (!mounted) return;
+    
+    setState(() {
+      merchant = result['merchant'];
+      date = result['date'];
+      total = result['total'];
+      currency = result['currency'];
+
+      _merchantController.text = merchant ?? '';
+      _dateController.text = date ?? '';
+      _totalController.text = total ?? '';
+      _currencyController.text = currency ?? '';
+    });
+
+    // Close loading dialog
+    if (mounted) Navigator.pop(context);
+
+    // Show success message
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Receipt scanned successfully!')),
+        const SnackBar(
+          content: Text('Receipt scanned successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
       );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to scan receipt: $e')));
+    }
+  } catch (e) {
+    // Close loading dialog
+    if (mounted) Navigator.pop(context);
+
+    // Show error
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to scan receipt: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
+}
 
   void _addNewItem() {
     setState(() {

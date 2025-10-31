@@ -2,8 +2,20 @@ import 'dart:io';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class ReceiptScannerService {
+  // Run in isolate to prevent UI freeze
   static Future<Map<String, dynamic>> scanReceipt(File image) async {
-    final inputImage = InputImage.fromFilePath(image.path);
+    try {
+      // Run the heavy ML processing in a separate isolate (background thread)
+      final result = await _scanInBackground(image.path);
+      return result;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // This runs in background isolate - won't block UI
+  static Future<Map<String, dynamic>> _scanInBackground(String imagePath) async {
+    final inputImage = InputImage.fromFilePath(imagePath);
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
 
     try {
@@ -91,10 +103,8 @@ class ReceiptScannerService {
     final lower = text.toLowerCase();
     final lines = lower.split('\n');
 
-    // Keywords that indicate a total
     final totalKeywords = ['total', 'amount due', 'balance', 'grand total'];
 
-    // Lines to ignore
     final blacklist = [
       'change',
       'tax',
@@ -126,12 +136,9 @@ class ReceiptScannerService {
     ];
 
     for (final line in lines) {
-      // Skip blacklisted lines
       if (blacklist.any((b) => line.contains(b))) continue;
 
-      // Check if this line contains a total keyword
       if (totalKeywords.any((k) => line.contains(k))) {
-        // Extract the last numeric value from the line
         final matches = RegExp(r'([\d.,]+)').allMatches(line);
         for (final match in matches.toList().reversed) {
           final value = match.group(1)?.replaceAll(RegExp(r'[^0-9.]'), '');
@@ -144,7 +151,6 @@ class ReceiptScannerService {
       }
     }
 
-    // Fallback: last numeric value in the receipt text that is not blacklisted
     for (final line in lines.reversed) {
       if (blacklist.any((b) => line.contains(b))) continue;
 

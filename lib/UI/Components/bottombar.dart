@@ -24,47 +24,42 @@ class BottomNavBar extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Left side
                 Row(
                   children: [
                     const SizedBox(width: 15),
-                    _buildNavItem(
-                      context,
-                      0,
-                      'assets/icons/home.svg',
-                      '/home',
-                      'Home',
+                    _NavItem(
+                      index: 0,
+                      assetPath: 'assets/icons/home.svg',
+                      route: '/home',
+                      label: 'Home',
+                      isActive: currentIndex == 0,
                     ),
                     const SizedBox(width: 35),
-                    _buildNavItem(
-                      context,
-                      1,
-                      'assets/icons/transaction.svg',
-                      '/transactions',
-                      'Transactions',
+                    _NavItem(
+                      index: 1,
+                      assetPath: 'assets/icons/transaction.svg',
+                      route: '/transactions',
+                      label: 'Transactions',
+                      isActive: currentIndex == 1,
                     ),
                   ],
                 ),
-
-                // Invisible spacer to balance FAB
-                // const SizedBox(width: 60), // same width as FAB’s diameter
-                // Right side
                 Row(
                   children: [
-                    _buildNavItem(
-                      context,
-                      2,
-                      'assets/icons/pie-chart.svg',
-                      '/budget',
-                      'Budget',
+                    _NavItem(
+                      index: 2,
+                      assetPath: 'assets/icons/pie-chart.svg',
+                      route: '/budget',
+                      label: 'Budget',
+                      isActive: currentIndex == 2,
                     ),
                     const SizedBox(width: 35),
-                    _buildNavItem(
-                      context,
-                      3,
-                      'assets/icons/user.svg',
-                      '/profile',
-                      'Profile',
+                    _NavItem(
+                      index: 3,
+                      assetPath: 'assets/icons/user.svg',
+                      route: '/profile',
+                      label: 'Profile',
+                      isActive: currentIndex == 3,
                     ),
                     const SizedBox(width: 15),
                   ],
@@ -76,26 +71,37 @@ class BottomNavBar extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildNavItem(
-    BuildContext context,
-    int index,
-    String assetPath,
-    String route,
-    String label,
-  ) {
-    final isActive = currentIndex == index;
+// Extracted widget to prevent rebuilds
+class _NavItem extends StatelessWidget {
+  final int index;
+  final String assetPath;
+  final String route;
+  final String label;
+  final bool isActive;
 
+  const _NavItem({
+    required this.index,
+    required this.assetPath,
+    required this.route,
+    required this.label,
+    required this.isActive,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => context.pushNamed(route),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           SvgPicture.asset(
             assetPath,
             width: isActive ? 30 : 28,
             height: isActive ? 30 : 28,
             colorFilter: ColorFilter.mode(
-              isActive ? Color(0xff7F3DFF) : Color(0xffC6C6C6),
+              isActive ? const Color(0xff7F3DFF) : const Color(0xffC6C6C6),
               BlendMode.srcIn,
             ),
           ),
@@ -104,7 +110,7 @@ class BottomNavBar extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: isActive ? Color(0xff7F3DFF) : Color(0xffC6C6C6),
+              color: isActive ? const Color(0xff7F3DFF) : const Color(0xffC6C6C6),
             ),
           ),
         ],

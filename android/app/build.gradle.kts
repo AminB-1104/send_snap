@@ -4,7 +4,7 @@ import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android") // use this instead of "kotlin-android"
+    id("org.jetbrains.kotlin.android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -38,24 +38,22 @@ android {
         versionName = flutter.versionName
     }
 
-    // signingConfigs {
-    //     create("release") {
-    //         keyAlias = keystoreProperties["keyAlias"] as String?
-    //         keyPassword = keystoreProperties["keyPassword"] as String?
-    //         storeFile = file(keystoreProperties["storeFile"] as String?)
-    //         storePassword = keystoreProperties["storePassword"] as String?
-    //     }
-    // }
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
+    }
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
             isShrinkResources = false
-            // signingConfig = signingConfigs.getByName("release")
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
         }
     }
 }
