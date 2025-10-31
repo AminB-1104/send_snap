@@ -173,18 +173,6 @@ class _ImportDataPageState extends State<ImportDataPage> {
 
   Future<void> _pickFile() async {
     try {
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Storage permission denied.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
@@ -260,6 +248,7 @@ class _ImportDataPageState extends State<ImportDataPage> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Import failed: $e'),

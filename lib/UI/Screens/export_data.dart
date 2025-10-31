@@ -1,10 +1,11 @@
+import 'dart:typed_data';
+
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hive/hive.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:send_snap/Data/Models/category_model.dart';
 import 'dart:convert';
-import 'dart:io';
 import 'package:send_snap/Services/hive_service.dart';
 
 class ExportDataPage extends StatefulWidget {
@@ -467,111 +468,92 @@ class _ExportDataPageState extends State<ExportDataPage> {
   }
 
   Future<void> _exportData() async {
-    try {
-      // Request storage permission
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Storage permission denied.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
+  try {
+    // Open the expense box
+    final expenseBox = HiveService.expenses;
+    final allExpenses = expenseBox.values.toList();
 
-      // Open the expense box
-      final expenseBox = HiveService.expenses;
-      final allExpenses = expenseBox.values.toList();
+    // --- Filter by Category ---
+    var filtered = allExpenses.where((expense) {
+      if (selectedCategoriesText == 'All categories') return true;
+      return expense.category == selectedCategoriesText;
+    }).toList();
 
-      // --- Filter by Category ---
-      var filtered = allExpenses.where((expense) {
-        if (selectedCategoriesText == 'All categories') return true;
-        return expense.category == selectedCategoriesText;
-      }).toList();
+    // --- Filter by Date Range ---
+    final now = DateTime.now();
+    DateTime fromDate;
 
-      // --- Filter by Date Range ---
-      final now = DateTime.now();
-      DateTime fromDate;
-
-      switch (selectedDateRange) {
-        case 'Today':
-          fromDate = DateTime(now.day);
-          break;
-        case 'Last week':
-          fromDate = now.subtract(const Duration(days: 7));
-          break;
-        case 'Last 30 days':
-          fromDate = now.subtract(const Duration(days: 30));
-          break;
-        case 'Last year':
-          fromDate = now.subtract(const Duration(days: 365));
-          break;
-        default:
-          fromDate = DateTime(2000);
-      }
-
-      filtered = filtered.where((e) => e.date.isAfter(fromDate)).toList();
-
-      if (filtered.isEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No Expenses matches your filters!')),
-        );
-        return;
-      }
-
-      // --- Convert to JSON ---
-      final jsonData = filtered
-          .map(
-            (e) => {
-              'id': e.id,
-              'merchant': e.merchant,
-              'date': e.date.toIso8601String(),
-              'total': e.total,
-              'currency': e.currency,
-              'category': e.category,
-              'note': e.note,
-              'imagepath': e.imagepath,
-              'items': e.items,
-            },
-          )
-          .toList();
-
-      final jsonString = const JsonEncoder.withIndent('  ').convert(jsonData);
-
-      
-      // --- Save to Downloads Folder ---
-      final downloadsDir = Directory('/storage/emulated/0/Download');
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final filePath = '${downloadsDir.path}/expenses_export_$timestamp.json';
-      final file = File(filePath);
-      await file.writeAsString(jsonString);
-
-      // --- Success Message ---
-      if (context.mounted) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Exported to Downloads!\n${filePath.split('/').last}',
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Export failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    switch (selectedDateRange) {
+      case 'Today':
+        fromDate = DateTime(now.year, now.month, now.day);
+        break;
+      case 'Last week':
+        fromDate = now.subtract(const Duration(days: 7));
+        break;
+      case 'Last 30 days':
+        fromDate = now.subtract(const Duration(days: 30));
+        break;
+      case 'Last year':
+        fromDate = now.subtract(const Duration(days: 365));
+        break;
+      default:
+        fromDate = DateTime(2000);
     }
+
+    filtered = filtered.where((e) => e.date.isAfter(fromDate)).toList();
+
+    if (filtered.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No expenses match your filters!')),
+      );
+      return;
+    }
+
+    // --- Convert to JSON ---
+    final jsonData = filtered.map((e) {
+      return {
+        'id': e.id,
+        'merchant': e.merchant,
+        'date': e.date.toIso8601String(),
+        'total': e.total,
+        'currency': e.currency,
+        'category': e.category,
+        'note': e.note,
+        'imagepath': e.imagepath,
+        'items': e.items,
+      };
+    }).toList();
+
+    final jsonString = const JsonEncoder.withIndent('  ').convert(jsonData);
+
+    // --- Let user choose where to save ---
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final Uint8List bytes = Uint8List.fromList(utf8.encode(jsonString));
+
+    final savedFile = await FileSaver.instance.saveFile(
+      name: 'expenses_export_$timestamp',
+      bytes: bytes,
+      fileExtension: 'json',
+      mimeType: MimeType.text,
+    );
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Exported successfully!\n$savedFile'),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Export failed: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
 }

@@ -5,7 +5,7 @@ import 'package:send_snap/Data/Models/expense_model.dart';
 class DashboardCard extends StatelessWidget {
   final List<ExpenseModel> expenses;
 
-  final income = 5000;
+  final income = 50000;
 
   const DashboardCard({super.key, required this.expenses});
 
@@ -24,7 +24,10 @@ class DashboardCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+        padding: const EdgeInsets.symmetric(
+          // horizontal: 24,
+          vertical: 28,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -39,7 +42,7 @@ class DashboardCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              "\$${income - total}",
+              "\$${(income - total).toStringAsFixed(0)}",
               // "\$${total.toStringAsFixed(2)}",
               style: TextStyle(
                 fontFamily: 'Inter',
@@ -50,12 +53,8 @@ class DashboardCard extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Income vs Expense summary (just like Figma)
-            // Padding(
-            // padding: const EdgeInsets.symmetric(horizontal: 1.0),
-            // child:
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Container(
                   decoration: BoxDecoration(
