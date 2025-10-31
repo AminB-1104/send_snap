@@ -175,6 +175,7 @@ class _ImportDataPageState extends State<ImportDataPage> {
     try {
       final status = await Permission.storage.request();
       if (!status.isGranted) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Storage permission denied.'),
@@ -195,6 +196,7 @@ class _ImportDataPageState extends State<ImportDataPage> {
         _selectedFilePath = result.files.single.path!;
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('File selection failed: $e'),
@@ -211,6 +213,7 @@ class _ImportDataPageState extends State<ImportDataPage> {
       final List<dynamic> decoded = jsonDecode(jsonString);
 
       if (decoded.isEmpty) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Selected file is empty.')),
         );
@@ -249,6 +252,7 @@ class _ImportDataPageState extends State<ImportDataPage> {
         _skippedCount = skipped;
       });
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Imported: $imported | Skipped: $skipped'),

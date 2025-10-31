@@ -7,6 +7,7 @@ import 'package:send_snap/Data/Models/category_model.dart';
 import 'package:send_snap/Data/Models/expense_model.dart';
 import 'package:send_snap/Services/hive_service.dart';
 import 'package:send_snap/Services/receipt_scanner_service.dart';
+import 'package:send_snap/UI/Components/camera_capture.dart';
 
 class AddExpensePage extends StatefulWidget {
   final Function(CategoryModel?)? onChanged;
@@ -42,91 +43,93 @@ class _AddExpensePageState extends State<AddExpensePage> {
   String? total;
   String? currency;
 
-  // Replace your _pickImage function in add_expenses.dart with this:
+  // New flag to show scanning overlay
+  bool _isScanning = false;
 
-Future<void> _pickImage(ImageSource source) async {
-  final pickedFile = await picker.pickImage(source: source);
+  @override
+  void initState() {
+    super.initState();
+    _currencyController.text = 'USD'; // default currency
 
-  if (pickedFile == null) return;
+    // If editing, prefill everything
+    final editing = widget.expenseToEdit;
+    if (editing != null) {
+      _merchantController.text = editing.merchant;
+      _dateController.text =
+          "${editing.date.day}/${editing.date.month}/${editing.date.year}";
+      _totalController.text = editing.total.toString();
+      _currencyController.text = editing.currency;
+      _noteController.text = editing.note;
+      selectedCategory = HiveService.categories.values.firstWhere(
+        (cat) => cat.name == editing.category,
+        orElse: () => HiveService.categories.values.first,
+      );
+      _image = editing.imagepath.isNotEmpty ? File(editing.imagepath) : null;
 
-  final image = File(pickedFile.path);
-  setState(() => _image = image);
+      // Prefill items
+      for (final item in editing.items) {
+        _itemControllers.add(TextEditingController(text: item));
+      }
+    }
+  }
 
-  // Show loading dialog BEFORE starting heavy ML processing
-  if (!mounted) return;
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => PopScope(
-      canPop: false,
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7F3DFF)),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Scanning receipt...',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
+  @override
+  void dispose() {
+    _merchantController.dispose();
+    _dateController.dispose();
+    _totalController.dispose();
+    _currencyController.dispose();
+    _noteController.dispose();
+    for (final c in _itemControllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
 
-  try {
-    // This now runs without blocking UI thanks to our optimized service
-    final result = await ReceiptScannerService.scanReceipt(image);
-
+  // Unified handler that takes a File (camera or gallery) and runs OCR safely
+  Future<void> _processPickedImage(
+    File imageFile,
+    ScaffoldMessengerState messenger,
+  ) async {
     if (!mounted) return;
-    
     setState(() {
-      merchant = result['merchant'];
-      date = result['date'];
-      total = result['total'];
-      currency = result['currency'];
-
-      _merchantController.text = merchant ?? '';
-      _dateController.text = date ?? '';
-      _totalController.text = total ?? '';
-      _currencyController.text = currency ?? '';
+      _image = imageFile;
+      _isScanning = true;
     });
 
-    // Close loading dialog
-    if (mounted) Navigator.pop(context);
+    try {
+      final result = await ReceiptScannerService.scanReceipt(imageFile);
+      debugPrint('📄 OCR Result: $result');
 
-    // Show success message
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+
+      setState(() {
+        merchant = result['merchant'];
+        date = result['date'];
+        total = result['total'];
+        currency = result['currency'];
+
+        _merchantController.text = merchant ?? '';
+        _dateController.text = date ?? '';
+        _totalController.text = total ?? '';
+        _currencyController.text = currency ?? '';
+        _isScanning = false;
+      });
+
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Receipt scanned successfully!'),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
         ),
       );
-    }
-  } catch (e) {
-    // Close loading dialog
-    if (mounted) Navigator.pop(context);
+    } catch (e) {
+      debugPrint('❌ Error scanning receipt: $e');
+      if (!mounted) return;
 
-    // Show error
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      setState(() => _isScanning = false);
+
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Failed to scan receipt: $e'),
           backgroundColor: Colors.red,
@@ -135,7 +138,17 @@ Future<void> _pickImage(ImageSource source) async {
       );
     }
   }
-}
+
+  // Gallery flow (unchanged UI, but now uses unified processing)
+  Future<void> _pickImage(ImageSource source) async {
+    final messenger = ScaffoldMessenger.of(context); // grab messenger early
+
+    final pickedFile = await picker.pickImage(source: source);
+    if (pickedFile == null) return;
+
+    final image = File(pickedFile.path);
+    await _processPickedImage(image, messenger);
+  }
 
   void _addNewItem() {
     setState(() {
@@ -217,46 +230,6 @@ Future<void> _pickImage(ImageSource source) async {
     Navigator.pop(context);
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _currencyController.text = 'USD'; // default currency
-
-    // If editing, prefill everything
-    final editing = widget.expenseToEdit;
-    if (editing != null) {
-      _merchantController.text = editing.merchant;
-      _dateController.text =
-          "${editing.date.day}/${editing.date.month}/${editing.date.year}";
-      _totalController.text = editing.total.toString();
-      _currencyController.text = editing.currency;
-      _noteController.text = editing.note;
-      selectedCategory = HiveService.categories.values.firstWhere(
-        (cat) => cat.name == editing.category,
-        orElse: () => HiveService.categories.values.first,
-      );
-      _image = editing.imagepath.isNotEmpty ? File(editing.imagepath) : null;
-
-      // Prefill items
-      for (final item in editing.items) {
-        _itemControllers.add(TextEditingController(text: item));
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _merchantController.dispose();
-    _dateController.dispose();
-    _totalController.dispose();
-    _currencyController.dispose();
-    _noteController.dispose();
-    for (final c in _itemControllers) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
   // UI
 
   @override
@@ -269,28 +242,549 @@ Future<void> _pickImage(ImageSource source) async {
     return Scaffold(
       backgroundColor: red,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            // --- AppBar Section ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Back button
-                  InkWell(
-                    onTap: () => Navigator.pop(context),
-                    borderRadius: BorderRadius.circular(12),
-                    child: SvgPicture.asset(
-                      'assets/icons/arrow-left.svg',
-                      colorFilter: ColorFilter.mode(
-                        Colors.white,
-                        BlendMode.srcIn,
+            // Main content
+            Column(
+              children: [
+                // --- AppBar Section ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Back button
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        borderRadius: BorderRadius.circular(12),
+                        child: SvgPicture.asset(
+                          'assets/icons/arrow-left.svg',
+                          colorFilter: ColorFilter.mode(
+                            Colors.white,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      ),
+                      const Text(
+                        "Expense",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Inter',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 40), // balance layout
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // --- Amount Section ---
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20.0, top: 20),
+                      child: Row(
+                        children: [
+                          Text(
+                            "How much?",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
+                          if (_totalEmpty)
+                            const Text(
+                              " *",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _totalController,
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 64,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              hintText: '0',
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide.none,
+                              ),
+                              hintStyle: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 100,
+                          child: TextFormField(
+                            controller: _currencyController,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                // --- White Card Section ---
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 24,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(32),
+                      ),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextFormField(
+                            controller: _merchantController,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w500,
+                              color: theme.textTheme.bodyMedium!.color,
+                            ),
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                              hintText: 'Merchant',
+                              hintStyle: TextStyle(color: Color(0xAA91919F)),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Category field
+                          GestureDetector(
+                            onTap: () async {
+                              final selected =
+                                  await showModalBottomSheet<CategoryModel>(
+                                    context: context,
+                                    backgroundColor: theme.colorScheme.surface,
+                                    shape: const RoundedRectangleBorder(
+                                      side: BorderSide.none,
+                                      borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(20),
+                                      ),
+                                    ),
+                                    builder: (_) =>
+                                        _CategoryPicker(categories: categories),
+                                  );
+
+                              if (selected != null) {
+                                setState(() => selectedCategory = selected);
+                              }
+                            },
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                hintStyle: TextStyle(color: Color(0xff91919F)),
+                                border: OutlineInputBorder(
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  if (selectedCategory != null)
+                                    Row(
+                                      children: [
+                                        SvgPicture.asset(
+                                          selectedCategory!.iconsvg,
+                                          colorFilter: ColorFilter.mode(
+                                            selectedCategory!.color,
+                                            BlendMode.srcIn,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          selectedCategory!.name,
+                                          style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w500,
+                                            color: selectedCategory!.color,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  else
+                                    const Text(
+                                      'Select category *',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xAA91919F),
+                                      ),
+                                    ),
+                                  SvgPicture.asset(
+                                    'assets/icons/arrow-down-2.svg',
+                                    colorFilter: ColorFilter.mode(
+                                      Color(0xff91919F),
+                                      BlendMode.srcIn,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Date field
+                          TextFormField(
+                            controller: _dateController,
+                            readOnly: true,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w500,
+                              color: theme.textTheme.bodyMedium!.color,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: _dateEmpty
+                                  ? 'Select a date *'
+                                  : 'Select a date',
+                              hintStyle: TextStyle(color: Color(0xAA91919F)),
+                              suffixIcon: Icon(
+                                Icons.calendar_month_rounded,
+                                color: Color(0xff91919F),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            onTap: () async {
+                              final DateTime? pickedDate = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(1990),
+                                lastDate: DateTime(2050),
+                              );
+
+                              if (pickedDate != null) {
+                                _dateController.text =
+                                    "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                                setState(() => _dateEmpty = false);
+                              }
+                            },
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Note field
+                          TextFormField(
+                            controller: _noteController,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w500,
+                              color: theme.textTheme.bodyMedium!.color,
+                            ),
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                              hintText: _noteEmpty
+                                  ? 'Description *'
+                                  : 'Description',
+                              hintStyle: TextStyle(color: Color(0xAA91919F)),
+                            ),
+                            onChanged: (_) {
+                              if (_noteEmpty) {
+                                setState(() => _noteEmpty = false);
+                              }
+                            },
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Items Section
+                          Text(
+                            "Items (optional)",
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: theme.textTheme.bodyMedium!.color,
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          Column(
+                            children: List.generate(_itemControllers.length, (
+                              index,
+                            ) {
+                              final controller = _itemControllers[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: controller,
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 16,
+                                          color:
+                                              theme.textTheme.bodyMedium!.color,
+                                        ),
+                                        decoration: InputDecoration(
+                                          hintText: 'Item name',
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          fillColor: theme.colorScheme.surface,
+                                          filled: true,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () => _removeItem(index),
+                                      child: SvgPicture.asset(
+                                        'assets/icons/trash.svg',
+                                        colorFilter: ColorFilter.mode(
+                                          Colors.red,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ),
+
+                          // Add Item button
+                          TextButton.icon(
+                            onPressed: _addNewItem,
+                            icon: Icon(Icons.add, color: Color(0xFF7F3DFF)),
+                            label: Text(
+                              "Add Item",
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF7F3DFF),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Add Attachment field
+                          Container(
+                            height: 60,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: theme.colorScheme.surface,
+                            ),
+                            child: Material(
+                              color: theme.colorScheme.surface,
+                              child: InkWell(
+                                onTap: () {
+                                  _showAttachmentModal(context);
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SvgPicture.asset(
+                                      'assets/icons/attachment.svg',
+                                      width: 32,
+                                      height: 32,
+                                      colorFilter: const ColorFilter.mode(
+                                        Color(0xAA91919F),
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      "Add attachment",
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xAA91919F),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          //Image Showcase
+                          if (_image != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 12.0),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Stack(
+                                  children: [
+                                    Image.file(
+                                      _image!,
+                                      width: double.infinity,
+                                      fit: BoxFit.fitWidth,
+                                    ),
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _image = null;
+                                            _merchantController.clear();
+                                            _dateController.clear();
+                                            _totalController.clear();
+                                            _currencyController.clear();
+                                          });
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.6),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          padding: const EdgeInsets.all(4),
+                                          child: const Icon(
+                                            Icons.close,
+                                            size: 20,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
-                  const Text(
-                    "Expense",
+                ),
+              ],
+            ),
+
+            // Scanning overlay (covers screen while OCR runs)
+            if (_isScanning)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black45,
+                  child: const Center(
+                    child: SizedBox(
+                      width: 160,
+                      height: 120,
+                      child: Card(
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF7F3DFF),
+                                ),
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'Scanning receipt...',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+
+      bottomNavigationBar: Builder(
+        builder: (context) {
+          // Keep a builder so child SnackBars pick up correct scaffold context if needed
+          final theme = Theme.of(context);
+          return Container(
+            color: theme.colorScheme.surface,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: SizedBox(
+                height: 56, // button height
+                child: ElevatedButton(
+                  onPressed: _saveExpense,
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    backgroundColor: Color(0xFF7F3DFF),
+                  ),
+                  child: Text(
+                    widget.expenseToEdit != null
+                        ? "Save Changes"
+                        : "Add Expense",
                     style: TextStyle(
                       color: Colors.white,
                       fontFamily: 'Inter',
@@ -298,472 +792,11 @@ Future<void> _pickImage(ImageSource source) async {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 40), // balance layout
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // --- Amount Section ---
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, top: 20),
-                  child: Row(
-                    children: [
-                      Text(
-                        "How much?",
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                      if (_totalEmpty)
-                        const Text(
-                          " *",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _totalController,
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 64,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          hintText: '0',
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide.none,
-                          ),
-                          hintStyle: TextStyle(color: Colors.white70),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 100,
-                      child: TextFormField(
-                        controller: _currencyController,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 20),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            // --- White Card Section ---
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 24,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextFormField(
-                        controller: _merchantController,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 17,
-                          fontWeight: FontWeight.w500,
-                          color: theme.textTheme.bodyMedium!.color,
-                        ),
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                          hintText: 'Merchant',
-                          hintStyle: TextStyle(color: Color(0xAA91919F)),
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Category field
-                      GestureDetector(
-                        onTap: () async {
-                          final selected =
-                              await showModalBottomSheet<CategoryModel>(
-                                context: context,
-                                backgroundColor: theme.colorScheme.surface,
-                                shape: const RoundedRectangleBorder(
-                                  side: BorderSide.none,
-                                  borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(20),
-                                  ),
-                                ),
-                                builder: (_) =>
-                                    _CategoryPicker(categories: categories),
-                              );
-
-                          if (selected != null) {
-                            setState(() => selectedCategory = selected);
-                          }
-                        },
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            hintStyle: TextStyle(color: Color(0xff91919F)),
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              if (selectedCategory != null)
-                                Row(
-                                  children: [
-                                    SvgPicture.asset(
-                                      selectedCategory!.iconsvg,
-                                      colorFilter: ColorFilter.mode(
-                                        selectedCategory!.color,
-                                        BlendMode.srcIn,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      selectedCategory!.name,
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w500,
-                                        color: selectedCategory!.color,
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              else
-                                const Text(
-                                  'Select category *',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xAA91919F),
-                                  ),
-                                ),
-                              SvgPicture.asset(
-                                'assets/icons/arrow-down-2.svg',
-                                colorFilter: ColorFilter.mode(
-                                  Color(0xff91919F),
-                                  BlendMode.srcIn,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Date field
-                      TextFormField(
-                        controller: _dateController,
-                        readOnly: true,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 17,
-                          fontWeight: FontWeight.w500,
-                          color: theme.textTheme.bodyMedium!.color,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: _dateEmpty
-                              ? 'Select a date *'
-                              : 'Select a date',
-                          hintStyle: TextStyle(color: Color(0xAA91919F)),
-                          suffixIcon: Icon(
-                            Icons.calendar_month_rounded,
-                            color: Color(0xff91919F),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        onTap: () async {
-                          final DateTime? pickedDate = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(1990),
-                            lastDate: DateTime(2050),
-                          );
-
-                          if (pickedDate != null) {
-                            _dateController.text =
-                                "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-                            setState(
-                              () => _dateEmpty = false,
-                            ); // remove red asterisk once filled
-                          }
-                        },
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Note field
-                      TextFormField(
-                        controller: _noteController,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 17,
-                          fontWeight: FontWeight.w500,
-                          color: theme.textTheme.bodyMedium!.color,
-                        ),
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                          hintText: _noteEmpty
-                              ? 'Description *'
-                              : 'Description',
-                          hintStyle: TextStyle(color: Color(0xAA91919F)),
-                        ),
-                        onChanged: (_) {
-                          if (_noteEmpty) setState(() => _noteEmpty = false);
-                        },
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Items Section
-                      Text(
-                        "Items (optional)",
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: theme.textTheme.bodyMedium!.color,
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      Column(
-                        children: List.generate(_itemControllers.length, (
-                          index,
-                        ) {
-                          final controller = _itemControllers[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: controller,
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 16,
-                                      color: theme.textTheme.bodyMedium!.color,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: 'Item name',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      fillColor: theme.colorScheme.surface,
-                                      filled: true,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                GestureDetector(
-                                  onTap: () => _removeItem(index),
-                                  child: SvgPicture.asset(
-                                    'assets/icons/trash.svg',
-                                    colorFilter: ColorFilter.mode(
-                                      Colors.red,
-                                      BlendMode.srcIn,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ),
-
-                      // Add Item button
-                      TextButton.icon(
-                        onPressed: _addNewItem,
-                        icon: Icon(Icons.add, color: Color(0xFF7F3DFF)),
-                        label: Text(
-                          "Add Item",
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF7F3DFF),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Add Attachment field
-                      Container(
-                        height: 60,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          color: theme.colorScheme.surface,
-                        ),
-                        child: Material(
-                          color: theme.colorScheme.surface,
-                          child: InkWell(
-                            onTap: () {
-                              _showAttachmentModal(context);
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/icons/attachment.svg',
-                                  width: 32,
-                                  height: 32,
-                                  colorFilter: const ColorFilter.mode(
-                                    Color(0xAA91919F),
-                                    BlendMode.srcIn,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  "Add attachment",
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xAA91919F),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      //Image Showcase
-                      if (_image != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Stack(
-                              children: [
-                                Image.file(
-                                  _image!,
-                                  width: double.infinity,
-                                  fit: BoxFit
-                                      .fitWidth, // will stretch the width, keep aspect ratio
-                                ),
-                                Positioned(
-                                  top: 8,
-                                  right: 8,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _image = null;
-                                        _merchantController.clear();
-                                        _dateController.clear();
-                                        _totalController.clear();
-                                        _currencyController.clear();
-                                      });
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.6,
-                                        ),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      padding: const EdgeInsets.all(4),
-                                      child: const Icon(
-                                        Icons.close,
-                                        size: 20,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-
-      bottomNavigationBar: Container(
-        color: theme.colorScheme.surface,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          child: SizedBox(
-            height: 56, // button height
-            child: ElevatedButton(
-              onPressed: () {
-                _saveExpense();
-              },
-              style: ElevatedButton.styleFrom(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                backgroundColor: Color(0xFF7F3DFF),
-              ),
-              child: Text(
-                widget.expenseToEdit != null ? "Save Changes" : "Add Expense",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Inter',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -798,11 +831,31 @@ Future<void> _pickImage(ImageSource source) async {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // CAMERA CARD
                   GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickImage(ImageSource.camera);
+                    onTap: () async {
+                      // Don't pop the modal before launching camera. Launch camera on top of the modal,
+                      // wait for returned file, then close the modal and proceed.
+                      final messenger = ScaffoldMessenger.of(
+                        context,
+                      ); // safe reference
+                      final imageFile = await Navigator.push<File?>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CameraCapturePage(),
+                        ),
+                      );
+
+                      // Close the bottom sheet (modal)
+                      if (Navigator.canPop(context)) Navigator.pop(context);
+
+                      if (imageFile != null) {
+                        if (!mounted) return;
+
+                        await _processPickedImage(imageFile, messenger);
+                      }
                     },
+
                     child: Card(
                       color: theme.colorScheme.surface,
                       elevation: 0,
@@ -841,10 +894,17 @@ Future<void> _pickImage(ImageSource source) async {
                       ),
                     ),
                   ),
+
+                  // GALLERY CARD
                   GestureDetector(
-                    onTap: () {
+                    onTap: () async {
+                      // Close modal first then pick from gallery.
                       Navigator.pop(context);
-                      _pickImage(ImageSource.gallery);
+                      // final messenger = ScaffoldMessenger.of(context);
+                      await Future.delayed(
+                        const Duration(milliseconds: 120),
+                      ); // slight delay to ensure modal closed
+                      await _pickImage(ImageSource.gallery);
                     },
                     child: Card(
                       color: theme.colorScheme.surface,

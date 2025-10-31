@@ -471,6 +471,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
       // Request storage permission
       final status = await Permission.storage.request();
       if (!status.isGranted) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Storage permission denied.'),
@@ -514,6 +515,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
       filtered = filtered.where((e) => e.date.isAfter(fromDate)).toList();
 
       if (filtered.isEmpty) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No Expenses matches your filters!')),
         );
@@ -539,11 +541,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
 
       final jsonString = const JsonEncoder.withIndent('  ').convert(jsonData);
 
-      print('Expense count: ${HiveService.expenses.length}');
-      for (var e in HiveService.expenses.values) {
-        print('Expense -> ${e.merchant} | ${e.total}');
-      }
-
+      
       // --- Save to Downloads Folder ---
       final downloadsDir = Directory('/storage/emulated/0/Download');
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -553,6 +551,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
 
       // --- Success Message ---
       if (context.mounted) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -565,6 +564,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
       }
     } catch (e) {
       if (context.mounted) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Export failed: $e'),
