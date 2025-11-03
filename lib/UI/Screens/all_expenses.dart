@@ -12,14 +12,14 @@ import 'package:send_snap/UI/Components/bottombar.dart';
 import 'package:send_snap/UI/Components/month_dropdown.dart';
 import 'package:send_snap/UI/Screens/add_expenses.dart';
 
-class Transactions extends StatefulWidget {
-  const Transactions({super.key});
+class AllExpenses extends StatefulWidget {
+  const AllExpenses({super.key});
 
   @override
-  State<Transactions> createState() => _TransactionsState();
+  State<AllExpenses> createState() => _AllExpensesState();
 }
 
-class _TransactionsState extends State<Transactions> {
+class _AllExpensesState extends State<AllExpenses> {
   List<ExpenseModel>? _filteredExpenses;
   int selectedMonth = DateTime.now().month;
 

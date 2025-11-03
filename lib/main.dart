@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:send_snap/Services/hive_service.dart';
 import 'package:send_snap/Services/notification_service.dart';
 import 'package:send_snap/UI/Screens/add_expenses.dart';
-import 'package:send_snap/UI/Screens/all_transactions.dart';
+import 'package:send_snap/UI/Screens/all_expenses.dart';
 import 'package:send_snap/UI/Screens/budget.dart';
 import 'package:send_snap/UI/Screens/export_data.dart';
 import 'package:send_snap/UI/Screens/home_page.dart';
@@ -80,7 +80,7 @@ final GoRouter _router = GoRouter(
       name: '/transactions',
       path: '/transactions',
       builder: (BuildContext context, GoRouterState state) {
-        return const Transactions();
+        return const AllExpenses();
       },
     ),
     GoRoute(
