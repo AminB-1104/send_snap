@@ -525,6 +525,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
       // Pick a folder
       final directoryPath = await FilePicker.platform.getDirectoryPath();
       if (directoryPath == null) {
+        if (!mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Export canceled')));
