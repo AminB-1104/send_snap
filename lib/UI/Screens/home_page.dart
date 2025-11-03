@@ -124,7 +124,17 @@ class _HomePageState extends State<HomePage> {
           valueListenable: HiveService.expenses.listenable(),
           builder: (context, Box<ExpenseModel> box, _) {
             final allExpenses = box.values.toList();
-            final visibleExpenses = _applyFilters(allExpenses);
+
+            // Apply filters for week, month, year, etc.
+            final filteredExpenses = _applyFilters(allExpenses);
+
+            // Sort the filtered ones by date (latest first)
+            filteredExpenses.sort((a, b) => b.date.compareTo(a.date));
+
+            // Now only take 5 most recent from the filtered set
+            final recentExpenses = filteredExpenses.length > 5
+                ? filteredExpenses.take(5).toList()
+                : filteredExpenses;
 
             return LiquidPullToRefresh(
               onRefresh: () async {
@@ -175,7 +185,7 @@ class _HomePageState extends State<HomePage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Recent Transactions",
+                            "Recent Expenses",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -211,7 +221,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  visibleExpenses.isEmpty
+                  recentExpenses.isEmpty
                       ? const SliverFillRemaining(
                           hasScrollBody: false,
                           child: Center(
@@ -224,7 +234,7 @@ class _HomePageState extends State<HomePage> {
                       : SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
-                              final expense = visibleExpenses[index];
+                              final expense = recentExpenses[index];
                               final category =
                                   _categoryCache[expense.category] ??
                                   CategoryModel(
@@ -245,7 +255,7 @@ class _HomePageState extends State<HomePage> {
                                     _showExpenseDetails(context, expense),
                               );
                             },
-                            childCount: visibleExpenses.length,
+                            childCount: recentExpenses.length,
                             // ✅ ADDED: These 3 lines optimize list performance
                             addAutomaticKeepAlives:
                                 true, // Keep items alive when scrolling

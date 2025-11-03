@@ -14,7 +14,9 @@ class ReceiptScannerService {
   }
 
   // This runs in background isolate - won't block UI
-  static Future<Map<String, dynamic>> _scanInBackground(String imagePath) async {
+  static Future<Map<String, dynamic>> _scanInBackground(
+    String imagePath,
+  ) async {
     final inputImage = InputImage.fromFilePath(imagePath);
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
 
